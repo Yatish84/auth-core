@@ -316,5 +316,5 @@ sequenceDiagram
     GDPRCtrl->>Audit: recordAnonymizedEvent("GDPR_ACCOUNT_ERASED")
     
     GDPRCtrl-->>Boundary: Erasure Executed
-    Boundary-->>User: HTTP 200 OK ("Account PII anonymized; backups will purge in 30 days")
+    Boundary-->>User: HTTP 200 OK ("Account PII anonymized - backups purge in 30 days")
 ```
