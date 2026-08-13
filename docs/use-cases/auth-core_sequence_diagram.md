@@ -318,3 +318,104 @@ sequenceDiagram
     GDPRCtrl-->>Boundary: Erasure Executed
     Boundary-->>User: HTTP 200 OK ("Account PII anonymized - backups purge in 30 days")
 ```
+
+---
+
+### Sequence Diagram 9: Password Recovery and Session Revocation (`UC-501`, `UC-502`)
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Web as Web/Mobile Client
+    participant API as AuthRESTController
+    participant Recovery as RecoveryControl
+    participant DB as PostgreSQL
+    participant Notify as NotificationAdapter
+    participant Redis as Redis Revocation
+
+    User->>Web: Submit email
+    Web->>API: POST /auth/password/forgot
+    API->>Recovery: requestPasswordReset(email)
+    Recovery->>DB: Conditionally create hashed single-use token
+    Recovery-->>Notify: Dispatch reset link when eligible
+    API-->>Web: Generic 202 Accepted
+    User->>Web: Open link and submit new password
+    Web->>API: POST /auth/password/reset
+    API->>Recovery: resetPassword(token, password)
+    Recovery->>DB: Atomically consume token, check history, update Argon2id hash
+    Recovery->>DB: Revoke all token families and sessions
+    Recovery->>Redis: Set global user revocation timestamp
+    Recovery-->>Notify: Send password-changed alert
+    API-->>Web: 200 Password updated
+```
+
+### Sequence Diagram 10: MFA Enrollment (`UC-204`)
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Client
+    participant API as AuthRESTController
+    participant MFA as MFAControl
+    participant Cipher as SecretCipher
+    participant DB as PostgreSQL
+
+    User->>Client: Choose TOTP enrollment
+    Client->>API: POST /auth/mfa/totp/setup
+    API->>MFA: setupTOTP(user, recentAuth)
+    MFA->>Cipher: Encrypt generated secret
+    MFA->>DB: Store disabled pending factor
+    API-->>Client: QR payload + short-lived setup token
+    User->>Client: Enter first authenticator code
+    Client->>API: POST /auth/mfa/totp/confirm
+    API->>MFA: confirmTOTP(setupToken, code)
+    MFA->>DB: Lock pending factor and validate code
+    MFA->>DB: Enable factor and store hashed backup codes
+    API-->>Client: Enabled + one-time backup codes
+```
+
+### Sequence Diagram 11: Session Inspection and Selective Revocation (`UC-509`)
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Client
+    participant API as AuthRESTController
+    participant Session as SessionControl
+    participant DB as PostgreSQL
+    participant Redis as Redis Revocation
+
+    Client->>API: GET /auth/sessions
+    API->>Session: listSessions(currentUser)
+    Session->>DB: Query safe active session metadata
+    API-->>Client: Devices, last seen and current-session marker
+    User->>Client: Revoke selected device
+    Client->>API: DELETE /auth/sessions/{id}
+    API->>Session: revokeOwnedSession(user, id)
+    Session->>DB: Revoke session and family
+    Session->>Redis: Revoke active JTI/family context
+    API-->>Client: 204 No Content
+```
+
+### Sequence Diagram 12: Contact Change With Dual Verification (`UC-510`)
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Client
+    participant API as AuthRESTController
+    participant Recovery as RecoveryControl
+    participant DB as PostgreSQL
+    participant Notify as Email/SMS Adapters
+
+    Client->>API: POST /auth/contact-change
+    API->>Recovery: startContactChange(old, new, recentAuth)
+    Recovery->>DB: Store pending workflow
+    Recovery->>Notify: Send proof to old and new channels
+    Client->>API: POST /auth/contact-change/verify-old
+    Recovery->>DB: Record old-channel proof
+    Client->>API: POST /auth/contact-change/verify-new
+    Recovery->>DB: Atomically record proof and apply change if both valid
+    Recovery->>Notify: Send security confirmation
+    API-->>Client: Updated contact details
+```
