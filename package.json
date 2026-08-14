@@ -1,0 +1,15 @@
+{
+  "name": "auth-core",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @auth-core/web dev",
+    "build:web": "pnpm --filter @auth-core/web build",
+    "lint:web": "pnpm --filter @auth-core/web lint",
+    "typecheck:web": "pnpm --filter @auth-core/web typecheck",
+    "test:web": "pnpm --filter @auth-core/web test"
+  }
+}
