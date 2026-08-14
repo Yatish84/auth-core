@@ -2,7 +2,7 @@
 
 Central authentication, session, organization-access, and user-management engine for the Vittavaan web platform and future mobile application.
 
-> **Current phase:** Documentation and architecture review. Application code and infrastructure have not yet been implemented.
+> **Current phase:** Milestone 1 project foundation is implemented locally and ready for stakeholder review. Authentication features have not yet been implemented.
 
 ## In Plain Language
 
@@ -36,6 +36,7 @@ Recommended starting points:
 - [Sequence diagrams](./docs/use-cases/auth-core_sequence_diagram.md)
 - [Functional flowcharts](./docs/use-cases/auth-core_functional_flowchart.md)
 - [Implementation roadmap](./docs/delivery/implementation_roadmap.md)
+- [Project progress tracker](./docs/delivery/project_progress.md)
 - [Screen inventory and approval register](./docs/product/screen_inventory.md)
 
 ## Architecture
@@ -83,7 +84,7 @@ docs/                        Product, requirements, architecture, operations
 tests/                       Contract, integration, security, and E2E suites
 ```
 
-These directories will be created during implementation after this documentation baseline is approved.
+The Milestone 1 foundation now includes the web, API, JWT verifier, shared contract, local service, and automation structure. Additional package, infrastructure, and cross-service test folders will be added only when their milestones require them.
 
 ## Delivery Process
 
@@ -93,6 +94,48 @@ These directories will be created during implementation after this documentation
 4. Connect approved web screens and run automated security/E2E tests.
 5. Publish controlled free staging for review.
 6. Complete AWS production hardening, independent security review, and operational readiness.
+
+## Local Foundation Quick Start
+
+Milestone 1 introduces the development foundation. It does not yet contain account registration or login features.
+
+### Required tools
+
+- Docker Desktop - runs the local website, backend, database, Redis, and test email inbox.
+- Node.js 22 and pnpm - build the website.
+- Python 3.12 and `uv` - run and test the FastAPI backend.
+- Go 1.24 - run and test the JWT verification component.
+
+### Start everything
+
+```bash
+cp .env.example .env
+make up
+```
+
+After the services become healthy, open:
+
+- Website: `http://localhost:3000`
+- FastAPI documentation: `http://localhost:8000/docs`
+- API health: `http://localhost:8000/health/ready`
+- Go verifier health: `http://localhost:8081/health/ready`
+- Test email inbox: `http://localhost:8025`
+
+Stop the local environment with:
+
+```bash
+make down
+```
+
+Run the available automated checks with:
+
+```bash
+make test
+make lint
+make validate
+```
+
+Progress is recorded in [the project progress tracker](./docs/delivery/project_progress.md).
 
 ## Security Notice
 

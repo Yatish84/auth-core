@@ -1,0 +1,88 @@
+name: Quality Checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/validate_docs.py
+      - run: git diff --check
+
+  api:
+    name: Python API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --project services/auth-api --all-groups --frozen
+      - run: uv run --project services/auth-api ruff check services/auth-api
+      - run: uv run --project services/auth-api mypy services/auth-api/src
+      - run: uv run --project services/auth-api pytest
+
+  web:
+    name: Web Application
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint:web
+      - run: pnpm typecheck:web
+      - run: pnpm test:web
+      - run: pnpm build:web
+
+  verifier:
+    name: Go JWT Verifier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.x"
+          cache-dependency-path: services/jwt-verifier/go.mod
+      - run: gofmt -w services/jwt-verifier/cmd/server/main.go services/jwt-verifier/internal/httpapi/router.go services/jwt-verifier/internal/httpapi/router_test.go
+      - run: git diff --exit-code -- services/jwt-verifier
+      - run: go test ./...
+        working-directory: services/jwt-verifier
+      - run: go vet ./...
+        working-directory: services/jwt-verifier
+
+  containers:
+    name: Container Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config --quiet
+
+  secrets:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

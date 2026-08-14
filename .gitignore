@@ -149,6 +149,8 @@ activemq-data/
 
 # Environments
 .env
+.env.local
+.env.*.local
 .envrc
 .venv
 env/
@@ -156,6 +158,24 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+
+# Go
+services/jwt-verifier/bin/
+services/jwt-verifier/coverage.out
+
+# Local containers
+.docker-data/
 
 # Spyder project settings
 .spyderproject

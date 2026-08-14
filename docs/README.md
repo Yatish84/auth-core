@@ -54,6 +54,7 @@ No document in this review set represents a production certification. Security, 
 ### Delivery and Operations
 
 - [Implementation Roadmap](./delivery/implementation_roadmap.md) - Milestones, deliverables, and acceptance gates.
+- [Project Progress Tracker](./delivery/project_progress.md) - Plain-language milestone status, work log, decisions, and blockers.
 - [Testing Strategy](./delivery/testing_strategy.md) - Unit, integration, contract, browser, mobile, and security testing.
 - [Environment and Credentials](./operations/environment_and_credentials.md) - Tools, configuration, providers, and secrets.
 - [Git and Documentation Workflow](./operations/git_and_documentation_workflow.md) - Branch, commit, review, and publishing rules.
