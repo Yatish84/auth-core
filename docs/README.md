@@ -66,6 +66,7 @@ No document in this review set represents a production certification. Security, 
 - [Implementation Roadmap](./delivery/implementation_roadmap.md) - Milestones, deliverables, and acceptance gates.
 - [Project Progress Tracker](./delivery/project_progress.md) - Plain-language milestone status, work log, decisions, and blockers.
 - [Testing Strategy](./delivery/testing_strategy.md) - Unit, integration, contract, browser, mobile, and security testing.
+- [Quality Assurance Tracker](./delivery/quality_assurance_tracker.md) - Permanent table of tests and quality checks completed for each milestone.
 - [Environment and Credentials](./operations/environment_and_credentials.md) - Tools, configuration, providers, and secrets.
 - [Git and Documentation Workflow](./operations/git_and_documentation_workflow.md) - Branch, commit, review, and publishing rules.
 - [AWS Production Readiness](./operations/aws_production_readiness.md) - Migration prerequisites and operational controls.

@@ -25,7 +25,7 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 4. Login | Allow safe password, phone, and social sign-in. | Complete |
 | 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Complete |
 | 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Complete |
-| 7. Personal and organization workspaces | Add private portfolios, optional organizations, privacy-safe referrals, roles, and member removal. | In progress |
+| 7. Personal and organization workspaces | Add private portfolios, optional organizations, privacy-safe referrals, roles, and member removal. | Ready for review |
 | 8. Recovery and administration | Add password recovery and controlled support actions. | Not started |
 | 9. Privacy and auditing | Add audit review, data export, and account erasure. | Not started |
 | 10. Web experience | Connect all approved website screens to working services. | Not started |
@@ -75,7 +75,7 @@ Give every user one private workspace for managing their own portfolio, allow op
 - [x] Removing a member revokes bindings and active tenant access immediately.
 - [x] A last owner cannot be removed or demoted without a safe ownership transfer.
 - [x] PostgreSQL tests prove personal, cross-user, and cross-organization data isolation.
-- [ ] Documentation and any proposed workspace-management screens are reviewed by the project owner before UI implementation.
+- [x] Documentation and proposed workspace-management needs were reviewed by the project owner; no frontend screens were created or changed.
 
 ## Completed Milestone Archive
 
@@ -410,6 +410,8 @@ Create secure signed-in sessions after approved login and MFA workflows, while g
 - Confirmed offboarding invalidates the removed member's organization token while preserving their account, personal workspace, and unrelated sessions.
 - Expanded the shared OpenAPI contract to 43 paths and added the delivered workspace architecture guide without creating frontend screens.
 - Passed the completed Milestone 7 backend with 55 fast Python tests and 22 real PostgreSQL/Redis tests, including invitation replay, role authorization, personal isolation, scoped-token replacement, last-owner protection, and offboarding revocation paths.
+- Project owner approved the complete Milestone 7 delivery and authorized its GitHub pull request and merge.
+- Corrected the root README milestone status and added a permanent milestone-by-milestone Quality Assurance Tracker.
 
 ## Decisions
 

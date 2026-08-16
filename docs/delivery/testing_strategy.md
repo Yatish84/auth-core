@@ -1,5 +1,7 @@
 # Testing Strategy
 
+This document defines how the project should be tested. The separate [Quality Assurance Tracker](./quality_assurance_tracker.md) records the checks that were actually completed and their results for each milestone.
+
 ## Objectives
 
 Testing must prove successful journeys and show that abuse, replay, cross-tenant access, unsafe recovery, dependency failure, and malformed input are rejected safely.
