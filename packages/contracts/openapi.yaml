@@ -361,7 +361,104 @@ paths:
         "200": {$ref: "#/components/responses/MfaCompletion"}
         "400": {$ref: "#/components/responses/Problem"}
         "409": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/session:
+    post:
+      operationId: createSession
+      tags: [sessions]
+      parameters:
+        - {$ref: "#/components/parameters/ClientType"}
+        - {$ref: "#/components/parameters/DeviceFingerprint"}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateSessionRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/TokenPair"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/refresh:
+    post:
+      operationId: rotateRefreshToken
+      tags: [sessions]
+      parameters:
+        - {$ref: "#/components/parameters/ClientType"}
+        - {$ref: "#/components/parameters/DeviceFingerprint"}
+        - in: header
+          name: X-CSRF-Token
+          required: false
+          schema: {type: string}
+          description: Required for browser refresh requests and must match the CSRF cookie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RefreshRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/TokenPair"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/logout:
+    post:
+      operationId: logoutCurrentSession
+      tags: [sessions]
+      security: [{bearerAuth: []}]
+      responses:
+        "204": {description: Current session revoked.}
+        "401": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/logout-all:
+    post:
+      operationId: logoutAllSessions
+      tags: [sessions]
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: All active sessions revoked.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/LogoutAllResponse"}
+        "401": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/sessions:
+    get:
+      operationId: listSessions
+      tags: [sessions]
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Safe active-session metadata.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SessionsResponse"}
+        "401": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/sessions/{session_id}:
+    delete:
+      operationId: revokeSelectedSession
+      tags: [sessions]
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "204": {description: Selected owned session revoked.}
+        "401": {$ref: "#/components/responses/Problem"}
+        "404": {$ref: "#/components/responses/Problem"}
+  /.well-known/jwks.json:
+    get:
+      operationId: getSigningKeys
+      tags: [sessions]
+      responses:
+        "200":
+          description: Public JSON Web Keys used to verify access-token signatures.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/JwksResponse"}
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   parameters:
     OidcProvider:
       in: path
@@ -373,6 +470,16 @@ components:
       name: workflow_token
       required: true
       schema: {type: string, minLength: 20, maxLength: 512}
+    ClientType:
+      in: header
+      name: X-Client-Type
+      required: true
+      schema: {type: string, enum: [WEB, MOBILE]}
+    DeviceFingerprint:
+      in: header
+      name: X-Device-Fingerprint
+      required: true
+      schema: {type: string, minLength: 16, maxLength: 512}
   responses:
     Accepted:
       description: Request accepted without exposing account existence.
@@ -409,6 +516,11 @@ components:
       content:
         application/json:
           schema: {$ref: "#/components/schemas/PasskeyOptionsResponse"}
+    TokenPair:
+      description: Access token plus client-appropriate refresh delivery metadata.
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/TokenResponse"}
   schemas:
     EmailSignupRequest:
       type: object
@@ -650,6 +762,78 @@ components:
       required: [workflow_token]
       properties:
         workflow_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+    CreateSessionRequest:
+      type: object
+      additionalProperties: false
+      required: [workflow_token]
+      properties:
+        workflow_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        refresh_token:
+          type: [string, "null"]
+          minLength: 32
+          maxLength: 512
+          writeOnly: true
+          description: Mobile only; browser refresh tokens are sent in an HttpOnly cookie.
+    TokenResponse:
+      type: object
+      additionalProperties: false
+      required: [token_type, access_token, access_expires_at, refresh_token, refresh_expires_at, session_id, csrf_token]
+      properties:
+        token_type: {type: string, const: Bearer}
+        access_token: {type: string, writeOnly: true}
+        access_expires_at: {type: string, format: date-time}
+        refresh_token: {type: [string, "null"], writeOnly: true}
+        refresh_expires_at: {type: string, format: date-time}
+        session_id: {type: string, format: uuid}
+        csrf_token: {type: [string, "null"]}
+    LogoutAllResponse:
+      type: object
+      additionalProperties: false
+      required: [revoked_sessions]
+      properties:
+        revoked_sessions: {type: integer, minimum: 0}
+    SessionSummary:
+      type: object
+      additionalProperties: false
+      required: [session_id, client_type, device_hint, ip_address, created_at, last_activity_at, expires_at, current]
+      properties:
+        session_id: {type: string, format: uuid}
+        client_type: {type: string, enum: [WEB, MOBILE]}
+        device_hint: {type: string}
+        ip_address: {type: [string, "null"]}
+        created_at: {type: string, format: date-time}
+        last_activity_at: {type: string, format: date-time}
+        expires_at: {type: string, format: date-time}
+        current: {type: boolean}
+    SessionsResponse:
+      type: object
+      additionalProperties: false
+      required: [sessions]
+      properties:
+        sessions:
+          type: array
+          maxItems: 10
+          items: {$ref: "#/components/schemas/SessionSummary"}
+    JwksResponse:
+      type: object
+      required: [keys]
+      properties:
+        keys:
+          type: array
+          items:
+            type: object
+            required: [kty, use, alg, kid, n, e]
+            properties:
+              kty: {type: string, const: RSA}
+              use: {type: string, const: sig}
+              alg: {type: string, const: RS256}
+              kid: {type: string}
+              n: {type: string}
+              e: {type: string}
     AcceptedResponse:
       type: object
       additionalProperties: false

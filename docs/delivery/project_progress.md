@@ -23,8 +23,8 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 2. Data foundation | Create the secure database and temporary storage structures. | Complete |
 | 3. Registration | Allow a user to create and verify an account. | Complete |
 | 4. Login | Allow safe password, phone, and social sign-in. | Complete |
-| 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Ready for review |
-| 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Not started |
+| 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Complete |
+| 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Ready for review |
 | 7. Organizations | Add organizations, invitations, roles, and member removal. | Not started |
 | 8. Recovery and administration | Add password recovery and controlled support actions. | Not started |
 | 9. Privacy and auditing | Add audit review, data export, and account erasure. | Not started |
@@ -32,28 +32,194 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 11. Public test website | Publish the controlled MVP for stakeholder testing. | Not started |
 | 12. AWS production preparation | Harden and move the system to the final AWS environment. | Not started |
 
-## Current Milestone: 5 - MFA, Backup Methods, and Passkeys
+## Current Milestone: 6 - Sessions and Token Security
 
 ### Goal
 
-Add reusable second-factor verification and enrollment so web and future mobile clients can safely complete high-risk login workflows before Milestone 6 creates a session.
+Create secure signed-in sessions after approved login and MFA workflows, while giving web and future mobile clients safe token refresh, logout, device visibility, and stolen-token protection.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Challenge workflow | Bind every second-factor attempt to a short-lived proven-login workflow. | Ready for review |
-| Authenticator app | Enroll encrypted TOTP secrets and verify replay-safe six-digit codes. | Ready for review |
-| Email/SMS backup | Issue hashed, expiring, single-use secondary codes to verified contacts. | Ready for review |
-| Backup codes | Generate one-time recovery codes, store only keyed hashes, and consume atomically. | Ready for review |
-| Passkeys | Register and verify WebAuthn credentials with origin, RP, challenge, signature, and counter checks. | Ready for review |
-| Factor management | Safely list, label, and revoke factors without exposing secrets. | Ready for review |
-| Collision ownership | Reuse proven password/MFA workflows before linking a matching social identity. | Ready for review |
-| Workflow handoff | Return `session_ready` only after required MFA; continue issuing no JWTs before Milestone 6. | Ready for review |
-| Acceptance tests | Prove UC-104 and UC-201 to UC-204 success, replay, expiry, lock, and fallback paths. | Ready for review |
-| UI and documentation | Propose missing MFA/passkey states without changing approved frontend screens. | Ready for review |
+| Session creation | Exchange a one-time `session_ready` workflow for a signed access token and protected refresh token. | Ready for review |
+| Signing and JWKS | Sign access tokens with rotating asymmetric keys and publish public verification keys. | Ready for review |
+| Web/mobile delivery | Use a secure browser cookie for web refresh tokens and a JSON response for mobile secure storage. | Ready for review |
+| Refresh rotation | Replace every used refresh token atomically and reject replayed generations. | Ready for review |
+| Theft response | Revoke the complete token family, record an audit alert, and require a new login after reuse. | Ready for review |
+| Logout and revocation | Support current-device logout, all-device logout, and immediate Redis-backed denial. | Ready for review |
+| Session limits | Enforce 15-minute access and idle limits, a 24-hour session limit, a 30-day family ceiling, and maximum 10 sessions. | Ready for review |
+| Device sessions | List safe active-device details and let an owner revoke a selected session. | Ready for review |
+| Go verification | Validate signatures, expiry, audience, issuer, and revocation in the reusable Go gateway. | Ready for review |
+| Tests and documentation | Prove UC-401 to UC-405 and UC-509 across web/mobile, replay, timeout, and revocation paths. | Ready for review |
 
 ### Completion Checklist
+
+- [x] A session can be created only from a valid, single-use `session_ready` workflow.
+- [x] Access tokens are signed asymmetrically and expire within 15 minutes.
+- [x] Refresh tokens are stored only as hashes and rotate atomically after every use.
+- [x] Reusing an older refresh token revokes the complete family and records a theft alert.
+- [x] Browser refresh tokens use `Secure`, `HttpOnly`, `SameSite=Lax` cookies and CSRF protection.
+- [x] Mobile refresh tokens are returned only for secure device storage.
+- [x] Current-device, all-device, selected-session, and timeout revocation paths work immediately.
+- [x] A user cannot exceed 10 active session families.
+- [x] The Go verifier rejects invalid, expired, incorrectly scoped, or revoked access tokens.
+- [ ] Documentation and any proposed session-management screens are reviewed by the project owner.
+
+## Completed Milestone Archive
+
+When a milestone is accepted, its complete goal, work items, and completion checklist move here before the current milestone changes. The Work Log remains the chronological activity record.
+
+### Milestone 1 - Project Foundation
+
+#### Goal
+
+Prepare the project's basic structure so a developer can run the website, backend, token-checking service, PostgreSQL, Redis, and test email inbox in a consistent way.
+
+#### Work Items
+
+| Work item | Simple description | Final status |
+|---|---|---|
+| Monorepo folders | Organize the website, backend, future mobile app, shared files, tests, and infrastructure. | Complete |
+| Tool versions | Record the required Python, Node.js, Go, and package-manager versions. | Complete |
+| Local services | Configure PostgreSQL, Redis, and Mailpit using Docker Compose. | Complete |
+| Backend health check | Provide a safe page showing whether the API and its dependencies are running. | Complete |
+| Website status page | Show a simple website page that calls the backend health check. | Complete |
+| Go service health check | Confirm the future JWT verification component can run independently. | Complete |
+| Shared API contract | Document health endpoints in the first machine-readable OpenAPI file. | Complete |
+| Automated checks | Configure GitHub to test documentation, Python, web, Go, and containers. | Complete |
+| Setup guide | Explain how another developer starts and checks the project. | Complete |
+| Local validation | Run the complete connected environment and all available quality checks. | Complete |
+
+#### Completion Checklist
+
+- [x] A new developer can follow the setup guide.
+- [x] One command starts all local services.
+- [x] The website opens and displays backend availability.
+- [x] FastAPI reports application, PostgreSQL, and Redis readiness.
+- [x] The Go verifier reports that it is alive and ready.
+- [x] Automated tests and quality checks pass.
+- [x] No credentials are committed.
+- [x] Documentation is updated and reviewed.
+
+### Milestone 2 - Data Foundation
+
+#### Goal
+
+Create the secure, reusable storage layer that future web and mobile registration, login, session, organization, recovery, and audit workflows will share.
+
+#### Work Items
+
+| Work item | Simple description | Final status |
+|---|---|---|
+| Migration system | Add numbered, repeatable database changes using Alembic. | Complete |
+| Durable tables | Create the approved PostgreSQL tables for identities, security, organizations, governance, privacy, and events. | Complete |
+| Data safety rules | Enforce uniqueness, valid state, secure relationships, and concurrency rules in PostgreSQL. | Complete |
+| Tenant isolation | Prevent one organization from reading or changing another organization's records. | Complete |
+| Audit protection | Prevent application-level alteration or deletion of security audit history. | Complete |
+| Redis security keys | Add reusable expiring structures for OTPs, challenges, limits, revocations, and risk state. | Complete |
+| Repository layer | Add controlled data-access interfaces and PostgreSQL implementations for future workflows. | Complete |
+| Integration tests | Test migrations, constraints, audit immutability, Redis expiry, and tenant isolation with real services. | Complete |
+| CI and documentation | Run persistence checks automatically and explain the delivered storage model in plain language. | Complete |
+
+#### Completion Checklist
+
+- [x] An empty PostgreSQL database upgrades to the latest schema.
+- [x] All approved tables and important constraints exist.
+- [x] Cross-organization reads and writes are rejected.
+- [x] Audit records reject update and delete attempts.
+- [x] Redis security keys use safe identifiers and explicit expiration.
+- [x] Repository and migration integration tests pass.
+- [x] No plaintext secrets or customer data are committed.
+- [x] Documentation is updated and reviewed.
+
+### Milestone 3 - Registration and Verification
+
+#### Goal
+
+Build one secure registration and contact-verification service that the web app and future mobile app can both use.
+
+#### Work Items
+
+| Work item | Simple description | Final status |
+|---|---|---|
+| Shared API contracts | Define reusable email and phone registration requests and responses for web and mobile. | Complete |
+| Email registration | Create a pending account after validation, breach checking, and secure password hashing. | Complete |
+| Email verification | Send, resend, expire, and consume single-use verification links. | Complete |
+| Phone registration | Create a pending account and verify ownership using a short-lived OTP. | Complete |
+| Abuse protection | Enforce CAPTCHA boundaries, rate limits, OTP attempts, and safe duplicate handling. | Complete |
+| Provider adapters | Add interchangeable HIBP, CAPTCHA, email, and SMS boundaries with safe local implementations. | Complete |
+| Audit evidence | Record redacted registration and verification outcomes without secrets. | Complete |
+| Acceptance tests | Prove UC-301, UC-302, and UC-304 success and failure paths using PostgreSQL and Redis. | Complete |
+| UI recommendation | Document proposed usability improvements without changing approved wireframes. | Complete |
+| Documentation and CI | Update contracts, traceability, diagrams, developer guidance, and automated checks. | Complete |
+
+#### Completion Checklist
+
+- [x] Email registration creates a pending account and never stores plaintext passwords.
+- [x] Breached passwords and invalid CAPTCHA proofs are rejected safely.
+- [x] Email verification links are hashed, expiring, single-use, and resendable.
+- [x] Phone OTPs are hashed, rate-limited, attempt-limited, and short-lived.
+- [x] Duplicate and unknown-contact responses do not leak unsafe account details.
+- [x] Web and future mobile clients share the same versioned API contract.
+- [x] UC-301, UC-302, and UC-304 acceptance tests pass with real PostgreSQL and Redis.
+- [x] Documentation and UI recommendations are reviewed.
+
+### Milestone 4 - Primary Authentication and Risk
+
+#### Goal
+
+Verify primary identity safely, evaluate bounded login risk, and return a short-lived workflow decision that later MFA and session milestones can consume.
+
+#### Work Items
+
+| Work item | Simple description | Final status |
+|---|---|---|
+| Password login | Verify active password identities with anti-enumeration timing protection. | Complete |
+| Phone login | Issue and atomically consume short-lived login OTPs. | Complete |
+| Temporary lock | Apply the approved 15-minute lock after excessive failures. | Complete |
+| Risk decision | Evaluate bounded device, IP-change, and velocity signals without treating them as identity. | Complete |
+| Workflow handoff | Return opaque decisions for later MFA or session creation without issuing temporary JWTs. | Complete |
+| Social OIDC | Add provider-neutral state, nonce, PKCE, callback, and verified-profile boundaries. | Complete |
+| Collision protection | Block unsafe social auto-linking and require a future ownership-proof workflow. | Complete |
+| Fallback options | Return safe available methods only for a valid short-lived workflow. | Complete |
+| Acceptance tests | Prove UC-101 to UC-103, UC-105, UC-106, UC-303, and collision safety. | Complete |
+| UI and documentation | Document missing login states without changing approved wireframes. | Complete |
+
+#### Completion Checklist
+
+- [x] Unknown users and incorrect passwords have safe, generic behavior.
+- [x] Five failed password attempts trigger a 15-minute temporary lock.
+- [x] Phone login OTPs are hashed, expiring, attempt-limited, and single-use.
+- [x] Device and IP signals influence risk but never authenticate a user alone.
+- [x] High-risk outcomes require MFA rather than creating a session.
+- [x] OIDC state, nonce, PKCE, issuer, audience, and verified-email rules are enforced.
+- [x] Matching social email never auto-links to an existing account.
+- [x] No access or refresh JWT is issued before Milestone 6.
+- [x] Documentation and UI proposals are reviewed by the project owner.
+
+### Milestone 5 - MFA, Backup Methods, and Passkeys
+
+#### Goal
+
+Add reusable second-factor verification and enrollment so web and future mobile clients can safely complete high-risk login workflows before Milestone 6 creates a session.
+
+#### Work Items
+
+| Work item | Simple description | Final status |
+|---|---|---|
+| Challenge workflow | Bind every second-factor attempt to a short-lived proven-login workflow. | Complete |
+| Authenticator app | Enroll encrypted TOTP secrets and verify replay-safe six-digit codes. | Complete |
+| Email/SMS backup | Issue hashed, expiring, single-use secondary codes to verified contacts. | Complete |
+| Backup codes | Generate one-time recovery codes, store only keyed hashes, and consume atomically. | Complete |
+| Passkeys | Register and verify WebAuthn credentials with origin, RP, challenge, signature, and counter checks. | Complete |
+| Factor management | Safely list, label, and revoke factors without exposing secrets. | Complete |
+| Collision ownership | Reuse proven password/MFA workflows before linking a matching social identity. | Complete |
+| Workflow handoff | Return `session_ready` only after required MFA; continue issuing no JWTs before Milestone 6. | Complete |
+| Acceptance tests | Prove UC-104 and UC-201 to UC-204 success, replay, expiry, lock, and fallback paths. | Complete |
+| UI and documentation | Propose missing MFA/passkey states without changing approved frontend screens. | Complete |
+
+#### Completion Checklist
 
 - [x] TOTP secrets are encrypted and never returned after initial enrollment setup.
 - [x] A TOTP time step cannot be accepted twice and three failures lock the factor for 15 minutes.
@@ -64,7 +230,7 @@ Add reusable second-factor verification and enrollment so web and future mobile 
 - [x] Unknown, expired, locked, and provider-failure paths return safe problem responses.
 - [x] No factor can be enrolled or removed without a valid proven workflow.
 - [x] No access or refresh JWT is issued before Milestone 6.
-- [ ] Documentation and UI proposals are reviewed by the project owner.
+- [x] Documentation and UI proposals are reviewed by the project owner.
 
 ## Work Log
 
@@ -160,6 +326,23 @@ Add reusable second-factor verification and enrollment so web and future mobile 
 - Passed Python lint/type checks, web lint/type/test/build, Go tests/vet, documentation validation, OpenAPI parsing, Compose validation, and Docker health checks.
 - Rebuilt the Docker API, confirmed all services are healthy, and verified safe RFC 7807 errors from the live MFA boundary.
 - Marked Milestone 5 ready for stakeholder review; final acceptance remains with the project owner.
+- Project owner reviewed and approved Milestone 5 for GitHub publication.
+- Added an exact-value Gitleaks allowlist for two known local-only encryption fixtures after the scanner correctly blocked the first merge attempt.
+- Merged Milestone 5 pull request #6 into `main` after all six GitHub checks passed.
+- Started Milestone 6 on branch `codex/milestone-6-sessions`.
+- Reconciled UC-401 to UC-405 and UC-509 into one web/mobile session-security scope.
+- Added a permanent Completed Milestone Archive that preserves the goals, work items, and completion checklists for Milestones 1 through 5.
+- Added one-time session creation from approved login/MFA workflows with RS256 access tokens and public JWKS discovery.
+- Added web-only secure refresh cookies and double-submit CSRF protection while returning mobile refresh tokens for future Keychain/Keystore storage.
+- Added atomic PostgreSQL refresh rotation, keyed token hashes, replay theft detection, complete family revocation, and security audit evidence.
+- Added current, global, and selected-session logout plus 15-minute idle, 24-hour session, 30-day family, and 10-session cap enforcement.
+- Extended the Go verifier to cache public signing keys and reject invalid signature, issuer, audience, expiry, access JTI, family, and user revocation states.
+- Added seven session/JWKS API boundaries and expanded the shared OpenAPI contract to 34 paths.
+- Added session architecture documentation and UI recommendations without creating or changing frontend screens.
+- Passed 46 fast API/security tests and 18 real PostgreSQL/Redis integration tests.
+- Passed Python lint/type checks, web lint/type/test/build, Go tests/vet, documentation validation, OpenAPI parsing, and Compose validation.
+- Rebuilt the Docker API and Go verifier and completed a live issue, verify, rotate, old-access denial, replay detection, and family-revocation sequence.
+- Marked Milestone 6 ready for stakeholder review; final acceptance remains with the project owner.
 
 ## Decisions
 
@@ -168,12 +351,13 @@ Add reusable second-factor verification and enrollment so web and future mobile 
 | Use one repository for web, backend, future mobile, shared contracts, infrastructure, and documentation. | Keeps related changes synchronized while allowing each service to run separately. |
 | Build a small working foundation before authentication features. | Finds setup and communication problems early, before security logic becomes complex. |
 | Keep the future mobile application visible in the structure but do not design unapproved screens. | Protects future reuse without creating unauthorized UI work. |
+| Keep session rules shared while delivering refresh tokens differently to web and mobile clients. | Browsers require protected cookies, while mobile apps require operating-system secure storage. |
 | Track progress in this file. | Gives non-technical and technical stakeholders one clear status record. |
 
 ## Current Blockers or Owner Actions
 
-There are no current owner blockers. Local email/SMS delivery, AES-GCM secret encryption, and browser-standard WebAuthn allow development without paid provider credentials.
+There are no current owner blockers. Local signing keys will support development; AWS KMS credentials and production domains are not needed until production preparation.
 
 ## Next Planned Milestone
 
-After MFA and passkeys are accepted, Milestone 6 will add access tokens, refresh rotation, cookies, logout, and session management.
+After sessions are accepted, Milestone 7 will add organizations, invitations, roles, tenant switching, and member removal.
