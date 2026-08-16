@@ -468,10 +468,73 @@ class GovernedRequest(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     execute_after: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    target_user_version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     ticket_reference: Mapped[str | None] = mapped_column(String(120))
     result_metadata: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, server_default="{}"
     )
+
+
+class StaffRoleBinding(Base):
+    __tablename__ = "staff_role_bindings"
+    __table_args__ = (
+        CheckConstraint(
+            "role IN ('SUPPORT_AGENT_L2', 'SECURITY_SUPERVISOR_L3', 'ACCOUNT_ADMIN')",
+            name="role_valid",
+        ),
+        Index(
+            "uq_staff_role_bindings_active",
+            "user_id",
+            "role",
+            unique=True,
+            postgresql_where=text("revoked_at IS NULL"),
+        ),
+    )
+
+    binding_id: Mapped[UUID] = uuid_primary_key()
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("auth.users.user_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    role: Mapped[str] = mapped_column(String(48), nullable=False)
+    granted_by_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("auth.users.user_id", ondelete="SET NULL")
+    )
+    granted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ContactChangeRequest(Base):
+    __tablename__ = "contact_change_requests"
+    __table_args__ = (
+        CheckConstraint("contact_type IN ('email', 'phone')", name="contact_type_valid"),
+        CheckConstraint(
+            "state IN ('pending', 'applied', 'expired', 'cancelled')", name="state_valid"
+        ),
+        CheckConstraint("expires_at > created_at", name="expiry_after_creation"),
+        Index("ix_contact_changes_user_pending", "user_id", "state", "expires_at"),
+    )
+
+    request_id: Mapped[UUID] = uuid_primary_key()
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("auth.users.user_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    contact_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    old_value: Mapped[str] = mapped_column(String(320), nullable=False)
+    new_value: Mapped[str] = mapped_column(String(320), nullable=False)
+    old_code_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    new_code_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    state: Mapped[str] = mapped_column(String(24), nullable=False, server_default="pending")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    old_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    new_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class GDPRRequest(Base):

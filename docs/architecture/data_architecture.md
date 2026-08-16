@@ -48,7 +48,9 @@ erDiagram
 | `referrals` | Privacy-safe user acquisition attribution | Hashed token, expiry, one referred account, and bounded milestone status. |
 | `role_permission_catalog` | Canonical role definitions | Versioned module/role/permission mapping. |
 | `user_role_bindings` | User role assignment | Unique active user/org/module/role binding. |
-| `governed_requests` | Four-eyes and delayed actions | Initiator differs from approver; execute-after timestamp. |
+| `staff_role_bindings` | Global support/security authority | Approved role catalog; active binding checked from PostgreSQL rather than client claims. |
+| `contact_change_requests` | Dual-channel contact proof | Hashed old/new codes, ten-minute expiry, both proofs before application. |
+| `governed_requests` | Four-eyes and delayed actions | Initiator differs from approver; target version, approval time, and execute-after timestamp. |
 | `gdpr_requests` | Export and erasure lifecycle | State machine, timestamps, artifact reference. |
 | `audit_logs` | Append-only security history | No update/delete application grants; tamper-evident linkage. |
 | `outbox_events` | Reliable async work | Claimed/attempted status, idempotency key, redacted payload. |

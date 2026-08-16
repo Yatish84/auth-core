@@ -157,6 +157,7 @@ All admin endpoints require appropriate role claims, recent strong MFA, tenant c
 | POST | `/admin/users/{user_id}/recovery` | UC-507 | Issue governed single-use recovery path. |
 | POST | `/admin/mfa-resets` | UC-508 | Initiate delayed four-eyes reset. |
 | POST | `/admin/mfa-resets/{request_id}/approve` | UC-508 | Record distinct L3 approval. |
+| POST | `/admin/mfa-resets/{request_id}/execute` | UC-508 | Revalidate and execute only after the 12-hour delay. |
 | GET | `/admin/mfa-resets/{request_id}` | UC-508 | Inspect safe request status. |
 | GET | `/admin/audit-logs` | UC-505 | Search authorized, paginated audit history. |
 | GET | `/admin/roles` | UC-506 | Read canonical role and permission catalog. |

@@ -42,34 +42,34 @@ Help users safely regain account access while ensuring that powerful support act
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Recovery foundation | Define reusable recovery workflows, safe public responses, expiration, replay protection, and audit evidence. | In progress |
-| Password-reset request | Send a secure single-use reset link without revealing whether an email belongs to an account. | Not started |
-| Password-reset execution | Verify the reset link, password policy, breach status, and password history before changing the password. | Not started |
-| Session response | Revoke active sessions and refresh-token families after a successful password or sensitive contact change. | Not started |
-| Account unlock | Allow an automatic or authorized support process to release a temporary login lock safely. | Not started |
-| Account suspension | Let an authorized administrator suspend an account and immediately revoke all active access. | Not started |
-| Support-assisted recovery | Require a support ticket and verified identity evidence before issuing a single-use recovery link. | Not started |
-| Governed MFA reset | Require separate L2 initiation and L3 approval, then wait 12 hours and notify the user before execution. | Not started |
-| Contact change | Verify both the old and new email or phone channel before changing a primary contact. | Not started |
-| Staff authorization | Enforce approved support and security roles without trusting user-supplied role claims. | Not started |
-| Tests and documentation | Prove UC-501 to UC-504, UC-507, UC-508, and UC-510 success, abuse, replay, role, and delay paths. | Not started |
-| UI boundary | Document proposed recovery and administration screens without creating or changing frontend visuals until approved. | Not started |
+| Recovery foundation | Define reusable recovery workflows, safe public responses, expiration, replay protection, and audit evidence. | Ready for review |
+| Password-reset request | Send a secure single-use reset link without revealing whether an email belongs to an account. | Ready for review |
+| Password-reset execution | Verify the reset link, password policy, breach status, and password history before changing the password. | Ready for review |
+| Session response | Revoke active sessions and refresh-token families after a successful password or sensitive contact change. | Ready for review |
+| Account unlock | Allow an automatic or authorized support process to release a temporary login lock safely. | Ready for review |
+| Account suspension | Let an authorized administrator suspend an account and immediately revoke all active access. | Ready for review |
+| Support-assisted recovery | Require a support ticket and verified identity evidence before issuing a single-use recovery link. | Ready for review |
+| Governed MFA reset | Require separate L2 initiation and L3 approval, then wait 12 hours and notify the user before execution. | Ready for review |
+| Contact change | Verify both the old and new email or phone channel before changing a primary contact. | Ready for review |
+| Staff authorization | Enforce approved support and security roles without trusting user-supplied role claims. | Ready for review |
+| Tests and documentation | Prove UC-501 to UC-504, UC-507, UC-508, and UC-510 success, abuse, replay, role, and delay paths. | Ready for review |
+| UI boundary | Document proposed recovery and administration screens without creating or changing frontend visuals until approved. | Ready for review |
 
 ### Completion Checklist
 
-- [ ] Password-reset requests return the same safe response for known and unknown accounts.
-- [ ] Reset and recovery tokens are random, hashed at rest, expiring, rate-limited, and single-use.
-- [ ] New passwords pass policy, breach, and password-history checks before storage with Argon2id.
-- [ ] Successful password reset revokes existing sessions and sends a security notification.
-- [ ] Unlock and suspension actions require an authenticated, authorized staff role and a ticket reference.
-- [ ] Account suspension immediately blocks login and revokes all active access.
-- [ ] Support-assisted recovery records verified evidence without storing unnecessary sensitive documents.
-- [ ] The person approving an MFA reset is different from the person requesting it.
-- [ ] MFA reset execution cannot occur before the approved 12-hour delay.
-- [ ] The user is warned through original verified channels before a governed MFA reset executes.
-- [ ] Primary contact changes require proof through both the old and new channel.
-- [ ] Replay, expired, wrong-role, self-approval, early-execution, and changed-state paths are rejected safely.
-- [ ] Recovery behavior is reusable by the web client and future mobile app through the same API contracts.
+- [x] Password-reset requests return the same safe response for known and unknown accounts.
+- [x] Reset and recovery tokens are random, hashed at rest, expiring, rate-limited, and single-use.
+- [x] New passwords pass policy, breach, and password-history checks before storage with Argon2id.
+- [x] Successful password reset revokes existing sessions and sends a security notification.
+- [x] Unlock and suspension actions require an authenticated, authorized staff role and a ticket reference.
+- [x] Account suspension immediately blocks login and revokes all active access.
+- [x] Support-assisted recovery records verified evidence without storing unnecessary sensitive documents.
+- [x] The person approving an MFA reset is different from the person requesting it.
+- [x] MFA reset execution cannot occur before the approved 12-hour delay.
+- [x] The user is warned through original verified channels before a governed MFA reset executes.
+- [x] Primary contact changes require proof through both the old and new channel.
+- [x] Replay, expired, wrong-role, self-approval, early-execution, and changed-state paths are rejected safely.
+- [x] Recovery behavior is reusable by the web client and future mobile app through the same API contracts.
 - [ ] Documentation and any proposed recovery/admin screens are reviewed by the project owner before UI implementation.
 
 ## Completed Milestone Archive
@@ -456,6 +456,15 @@ Give every user one private workspace for managing their own portfolio, allow op
 - Merged pull request #8 into `main` with merge commit `af6061df0eb92b8985384eb09f406ea774807263`.
 - Preserved the complete Milestone 7 goal, work items, and completion checklist in the permanent archive.
 - Started Milestone 8 recovery and controlled-administration planning on branch `codex/milestone-8-recovery-admin`.
+- Added password-reset request and execution with generic responses, three-per-hour limits, keyed token hashes, HIBP checks, Argon2id, recent-password history, replay rejection, session revocation, and security alerts.
+- Added recent-MFA contact changes with separate hashed old/new channel proofs and atomic application only after both succeed.
+- Added database-backed global staff roles, authorized unlock/suspension, support recovery, and immediate account-wide session revocation.
+- Added four-eyes MFA reset initiation, distinct L3 approval, target-version revalidation, mandatory 12-hour delay, execution, notification, and audit evidence.
+- Added migration `0009_recovery_governance`, including staff bindings, contact workflows, governed timestamps, and password-history backfill.
+- Expanded the shared web/mobile OpenAPI contract from 43 to 55 paths and added the delivered recovery architecture guide without changing frontend screens.
+- Passed 68 fast Python tests and 26 real PostgreSQL/Redis tests, including reset replay/history, dual contact proof, staff-role denial, row isolation, self-approval denial, early-execution denial, and MFA revocation.
+- Passed Python lint/type checks, web lint/type/test/build, Go tests/vet, documentation validation, OpenAPI parsing, Compose validation, migration downgrade/upgrade, zero schema drift, and a live 202 generic recovery smoke test.
+- Marked Milestone 8 ready for project-owner review; no frontend visual was created or changed.
 
 ## Decisions
 
