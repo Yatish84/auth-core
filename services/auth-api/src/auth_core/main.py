@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse, Response
 
 from auth_core.boundary.http.health import router as health_router
 from auth_core.boundary.http.login import router as login_router
+from auth_core.boundary.http.mfa import router as mfa_router
 from auth_core.boundary.http.registration import router as registration_router
 from auth_core.config import get_settings
 from auth_core.infrastructure.database import close_database
@@ -34,12 +35,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type", "X-Request-ID"],
 )
 app.include_router(health_router)
 app.include_router(registration_router)
 app.include_router(login_router)
+app.include_router(mfa_router)
 
 
 @app.middleware("http")

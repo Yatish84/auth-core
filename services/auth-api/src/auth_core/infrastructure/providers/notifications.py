@@ -20,6 +20,18 @@ class MailpitEmailProvider:
         )
         await asyncio.to_thread(self._send, message)
 
+    async def send_security_code(self, email: str, code: str, context: str = "") -> None:
+        message = EmailMessage()
+        message["From"] = self._sender
+        message["To"] = email
+        message["Subject"] = "Your Vittavaan security code"
+        detail = f" for {context}" if context else ""
+        message.set_content(
+            f"Your Vittavaan security code{detail} is: {code}\n\n"
+            "This code expires in three minutes. Never share it with anyone."
+        )
+        await asyncio.to_thread(self._send, message)
+
     def _send(self, message: EmailMessage) -> None:
         with smtplib.SMTP(self._host, self._port, timeout=5) as client:
             client.send_message(message)
@@ -36,3 +48,25 @@ class MailpitSMSProvider:
             self._inbox,
             f"Local SMS simulation for {masked_phone}: verification code {code}",
         )
+
+    async def send_security_code(self, phone_e164: str, code: str) -> None:
+        masked_phone = f"***{phone_e164[-4:]}"
+        await self._email_provider.send_security_code(
+            self._inbox, code, f"local SMS simulation to {masked_phone}"
+        )
+
+
+class MailpitMFANotificationProvider:
+    def __init__(
+        self,
+        email_provider: MailpitEmailProvider,
+        sms_provider: MailpitSMSProvider,
+    ) -> None:
+        self._email_provider = email_provider
+        self._sms_provider = sms_provider
+
+    async def send_email_code(self, email: str, code: str) -> None:
+        await self._email_provider.send_security_code(email, code)
+
+    async def send_sms_code(self, phone_e164: str, code: str) -> None:
+        await self._sms_provider.send_security_code(phone_e164, code)

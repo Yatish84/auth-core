@@ -180,6 +180,48 @@ class RedisSecurityStore:
         value = await self._client.get(key.name)
         return cast(dict[str, Any], json.loads(value)) if value is not None else None
 
+    async def consume_login_workflow(self, token: str) -> dict[str, Any] | None:
+        key = self._keys.login_workflow(token)
+        value = await self._client.getdel(key.name)
+        return cast(dict[str, Any], json.loads(value)) if value is not None else None
+
+    async def store_mfa_challenge(self, token: str, payload: dict[str, Any]) -> None:
+        key = self._keys.mfa_challenge(token)
+        await cast(
+            Awaitable[Any], self._client.set(key.name, json.dumps(payload), ex=key.ttl_seconds)
+        )
+
+    async def get_mfa_challenge(self, token: str) -> dict[str, Any] | None:
+        key = self._keys.mfa_challenge(token)
+        value = await self._client.get(key.name)
+        return cast(dict[str, Any], json.loads(value)) if value is not None else None
+
+    async def consume_mfa_challenge(self, token: str) -> dict[str, Any] | None:
+        key = self._keys.mfa_challenge(token)
+        value = await self._client.getdel(key.name)
+        return cast(dict[str, Any], json.loads(value)) if value is not None else None
+
+    async def store_webauthn_challenge(
+        self, token: str, payload: dict[str, Any]
+    ) -> None:
+        key = self._keys.webauthn_challenge(token)
+        await cast(
+            Awaitable[Any], self._client.set(key.name, json.dumps(payload), ex=key.ttl_seconds)
+        )
+
+    async def consume_webauthn_challenge(self, token: str) -> dict[str, Any] | None:
+        key = self._keys.webauthn_challenge(token)
+        value = await self._client.getdel(key.name)
+        return cast(dict[str, Any], json.loads(value)) if value is not None else None
+
+    async def lock_factor(self, factor_id: UUID) -> None:
+        key = self._keys.factor_lock(factor_id)
+        await cast(Awaitable[Any], self._client.set(key.name, "1", ex=key.ttl_seconds))
+
+    async def factor_is_locked(self, factor_id: UUID) -> bool:
+        key = self._keys.factor_lock(factor_id)
+        return bool(await self._client.exists(key.name))
+
     async def store_oidc_workflow(self, state: str, payload: dict[str, Any]) -> None:
         key = self._keys.oidc_workflow(state)
         await cast(

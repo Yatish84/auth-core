@@ -188,6 +188,179 @@ paths:
             application/json:
               schema: {$ref: "#/components/schemas/FallbackOptionsResponse"}
         "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/mfa/methods:
+    get:
+      operationId: getMfaMethods
+      tags: [mfa]
+      parameters:
+        - $ref: "#/components/parameters/WorkflowToken"
+      responses:
+        "200":
+          description: Methods available for this proven login workflow.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MfaMethodsResponse"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/mfa/challenge:
+    post:
+      operationId: issueMfaChallenge
+      tags: [mfa]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/MfaChallengeRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/MfaChallenge"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+        "503": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/mfa/challenge/resend:
+    post:
+      operationId: resendMfaChallenge
+      tags: [mfa]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/MfaChallengeTokenRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/MfaChallenge"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/mfa/verify:
+    post:
+      operationId: verifyMfaChallenge
+      tags: [mfa]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/MfaVerifyRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/MfaCompletion"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/mfa/totp/setup:
+    post:
+      operationId: setupTotp
+      tags: [mfa]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TotpSetupRequest"}
+      responses:
+        "200":
+          description: One-time authenticator enrollment details.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/TotpSetupResponse"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/mfa/totp/confirm:
+    post:
+      operationId: confirmTotp
+      tags: [mfa]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/TotpConfirmRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/MfaCompletion"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/mfa/passkeys/options:
+    post:
+      operationId: createPasskeyRegistrationOptions
+      tags: [mfa, passkeys]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PasskeyRegistrationOptionsRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/PasskeyOptions"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/mfa/passkeys/confirm:
+    post:
+      operationId: confirmPasskeyRegistration
+      tags: [mfa, passkeys]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PasskeyConfirmRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/MfaCompletion"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/passkeys/options:
+    post:
+      operationId: createPasskeyAuthenticationOptions
+      tags: [passkeys]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PasskeyAuthenticationOptionsRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/PasskeyOptions"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/passkeys/verify:
+    post:
+      operationId: verifyPasskey
+      tags: [passkeys]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PasskeyConfirmRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/MfaCompletion"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/identities/collision/prove:
+    post:
+      operationId: proveOidcCollisionOwnership
+      tags: [mfa, login]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CollisionPasswordProofRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/MfaCompletion"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/mfa/devices:
+    get:
+      operationId: listMfaDevices
+      tags: [mfa]
+      parameters:
+        - $ref: "#/components/parameters/WorkflowToken"
+      responses:
+        "200":
+          description: Active security methods without secret material.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MfaDevicesResponse"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/mfa/devices/{mfa_id}:
+    delete:
+      operationId: revokeMfaDevice
+      tags: [mfa]
+      parameters:
+        - in: path
+          name: mfa_id
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/FactorRevokeRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/MfaCompletion"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "409": {$ref: "#/components/responses/Problem"}
 components:
   parameters:
     OidcProvider:
@@ -195,6 +368,11 @@ components:
       name: provider
       required: true
       schema: {type: string, enum: [google, apple, microsoft]}
+    WorkflowToken:
+      in: query
+      name: workflow_token
+      required: true
+      schema: {type: string, minLength: 20, maxLength: 512}
   responses:
     Accepted:
       description: Request accepted without exposing account existence.
@@ -216,6 +394,21 @@ components:
       content:
         application/json:
           schema: {$ref: "#/components/schemas/LoginDecisionResponse"}
+    MfaChallenge:
+      description: Short-lived MFA challenge without revealing full contact details.
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/MfaChallengeResponse"}
+    MfaCompletion:
+      description: Security completion handoff; access and refresh tokens are not issued yet.
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/MfaCompletionResponse"}
+    PasskeyOptions:
+      description: Browser-standard WebAuthn public-key options and an opaque challenge token.
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/PasskeyOptionsResponse"}
   schemas:
     EmailSignupRequest:
       type: object
@@ -326,6 +519,137 @@ components:
           type: array
           items: {type: string}
           uniqueItems: true
+    MfaMethod:
+      type: string
+      enum: [totp, email_otp, sms_otp, passkey, backup_code]
+    MfaMethodsResponse:
+      type: object
+      additionalProperties: false
+      required: [methods]
+      properties:
+        methods:
+          type: array
+          items: {$ref: "#/components/schemas/MfaMethod"}
+          uniqueItems: true
+    MfaChallengeRequest:
+      type: object
+      additionalProperties: false
+      required: [workflow_token, method]
+      properties:
+        workflow_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+        method: {$ref: "#/components/schemas/MfaMethod"}
+    MfaChallengeTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [challenge_token]
+      properties:
+        challenge_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+    MfaVerifyRequest:
+      allOf:
+        - $ref: "#/components/schemas/MfaChallengeTokenRequest"
+        - type: object
+          required: [code]
+          properties:
+            code: {type: string, minLength: 6, maxLength: 32, writeOnly: true}
+    MfaChallengeResponse:
+      type: object
+      additionalProperties: false
+      required: [challenge_token, method, destination_hint]
+      properties:
+        challenge_token: {type: string}
+        method: {$ref: "#/components/schemas/MfaMethod"}
+        destination_hint: {type: [string, "null"]}
+    MfaCompletionResponse:
+      type: object
+      additionalProperties: false
+      required: [result, workflow_token, backup_codes]
+      properties:
+        result: {type: string, enum: [session_ready, identity_linked]}
+        workflow_token: {type: [string, "null"]}
+        backup_codes:
+          type: array
+          items: {type: string, writeOnly: true}
+    TotpSetupRequest:
+      type: object
+      additionalProperties: false
+      required: [workflow_token]
+      properties:
+        workflow_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+        label: {type: string, minLength: 1, maxLength: 120, default: Authenticator app}
+    TotpSetupResponse:
+      type: object
+      additionalProperties: false
+      required: [enrollment_token, provisioning_uri, manual_secret]
+      properties:
+        enrollment_token: {type: string}
+        provisioning_uri: {type: string, writeOnly: true}
+        manual_secret: {type: string, writeOnly: true}
+    TotpConfirmRequest:
+      type: object
+      additionalProperties: false
+      required: [enrollment_token, code]
+      properties:
+        enrollment_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+        code: {type: string, pattern: "^[0-9]{6}$", writeOnly: true}
+    PasskeyRegistrationOptionsRequest:
+      type: object
+      additionalProperties: false
+      required: [workflow_token]
+      properties:
+        workflow_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+        label: {type: string, minLength: 1, maxLength: 120, default: Passkey}
+    PasskeyAuthenticationOptionsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        workflow_token: {type: [string, "null"], minLength: 20, maxLength: 512, writeOnly: true}
+    PasskeyConfirmRequest:
+      type: object
+      additionalProperties: false
+      required: [challenge_token, credential]
+      properties:
+        challenge_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+        credential:
+          type: object
+          additionalProperties: true
+    PasskeyOptionsResponse:
+      type: object
+      additionalProperties: false
+      required: [challenge_token, public_key]
+      properties:
+        challenge_token: {type: string}
+        public_key:
+          type: object
+          additionalProperties: true
+    CollisionPasswordProofRequest:
+      type: object
+      additionalProperties: false
+      required: [workflow_token, password]
+      properties:
+        workflow_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+        password: {type: string, minLength: 1, maxLength: 128, writeOnly: true}
+    MfaDevice:
+      type: object
+      additionalProperties: false
+      required: [mfa_id, factor_type, label]
+      properties:
+        mfa_id: {type: string, format: uuid}
+        factor_type: {type: string, enum: [totp, passkey, backup_codes]}
+        label: {type: [string, "null"]}
+    MfaDevicesResponse:
+      type: object
+      additionalProperties: false
+      required: [factors]
+      properties:
+        factors:
+          type: array
+          items: {$ref: "#/components/schemas/MfaDevice"}
+    FactorRevokeRequest:
+      type: object
+      additionalProperties: false
+      required: [workflow_token]
+      properties:
+        workflow_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
     AcceptedResponse:
       type: object
       additionalProperties: false

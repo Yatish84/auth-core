@@ -120,15 +120,23 @@ class SqlAlchemyLoginRepository:
                     )
                 )
             ).all()
-        methods = {
-            "password"
-            if identity.provider == "password"
-            else "phone_otp"
-            if identity.provider == "phone"
-            else identity.provider
-            for identity in identities
+        methods: set[str] = set()
+        for identity in identities:
+            if identity.provider == "password":
+                methods.update({"password", "email_otp"})
+            elif identity.provider == "phone":
+                methods.add("sms_otp")
+            else:
+                methods.add(identity.provider)
+        factor_methods = {
+            "email": "email_otp",
+            "sms": "sms_otp",
+            "backup_codes": "backup_code",
         }
-        methods.update(factor.factor_type for factor in factors)
+        methods.update(
+            factor_methods.get(factor.factor_type, factor.factor_type)
+            for factor in factors
+        )
         return tuple(sorted(methods))
 
     async def update_password_hash(self, user_id: UUID, password_hash: str) -> None:

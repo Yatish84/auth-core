@@ -198,6 +198,10 @@ class LoginControl:
                     await self._repository.fallback_methods(collision.user_id),
                     "oidc_collision",
                     event_id,
+                    {
+                        "oidc_provider": profile.provider,
+                        "oidc_subject": profile.subject,
+                    },
                 )
             try:
                 identity = await self._repository.provision_oidc(profile, event_id)
@@ -256,18 +260,19 @@ class LoginControl:
         methods: tuple[str, ...],
         method: str,
         correlation_id: UUID,
+        context: dict[str, str] | None = None,
     ) -> LoginDecision:
         token = secrets.token_urlsafe(32)
-        await self._redis.store_login_workflow(
-            token,
-            {
-                "user_id": str(identity.user_id),
-                "decision": decision.value,
-                "risk": risk.value,
-                "allowed_methods": list(methods),
-                "primary_method": method,
-            },
-        )
+        payload = {
+            "user_id": str(identity.user_id),
+            "decision": decision.value,
+            "risk": risk.value,
+            "allowed_methods": list(methods),
+            "primary_method": method,
+        }
+        if context:
+            payload.update(context)
+        await self._redis.store_login_workflow(token, payload)
         await self._repository.audit(
             (
                 "OIDC_ACCOUNT_COLLISION_DETECTED"

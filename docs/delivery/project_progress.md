@@ -23,7 +23,7 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 2. Data foundation | Create the secure database and temporary storage structures. | Complete |
 | 3. Registration | Allow a user to create and verify an account. | Complete |
 | 4. Login | Allow safe password, phone, and social sign-in. | Complete |
-| 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Not started |
+| 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Ready for review |
 | 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Not started |
 | 7. Organizations | Add organizations, invitations, roles, and member removal. | Not started |
 | 8. Recovery and administration | Add password recovery and controlled support actions. | Not started |
@@ -32,38 +32,39 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 11. Public test website | Publish the controlled MVP for stakeholder testing. | Not started |
 | 12. AWS production preparation | Harden and move the system to the final AWS environment. | Not started |
 
-## Current Milestone: 4 - Primary Authentication and Risk
+## Current Milestone: 5 - MFA, Backup Methods, and Passkeys
 
 ### Goal
 
-Verify primary identity safely, evaluate bounded login risk, and return a short-lived workflow decision that later MFA and session milestones can consume.
+Add reusable second-factor verification and enrollment so web and future mobile clients can safely complete high-risk login workflows before Milestone 6 creates a session.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Password login | Verify active password identities with anti-enumeration timing protection. | Complete |
-| Phone login | Issue and atomically consume short-lived login OTPs. | Complete |
-| Temporary lock | Apply the approved 15-minute lock after excessive failures. | Complete |
-| Risk decision | Evaluate bounded device, IP-change, and velocity signals without treating them as identity. | Complete |
-| Workflow handoff | Return opaque decisions for later MFA or session creation without issuing temporary JWTs. | Complete |
-| Social OIDC | Add provider-neutral state, nonce, PKCE, callback, and verified-profile boundaries. | Complete |
-| Collision protection | Block unsafe social auto-linking and require a future ownership-proof workflow. | Complete |
-| Fallback options | Return safe available methods only for a valid short-lived workflow. | Complete |
-| Acceptance tests | Prove UC-101 to UC-103, UC-105, UC-106, UC-303, and collision safety. | Complete |
-| UI and documentation | Document missing login states without changing approved wireframes. | Complete |
+| Challenge workflow | Bind every second-factor attempt to a short-lived proven-login workflow. | Ready for review |
+| Authenticator app | Enroll encrypted TOTP secrets and verify replay-safe six-digit codes. | Ready for review |
+| Email/SMS backup | Issue hashed, expiring, single-use secondary codes to verified contacts. | Ready for review |
+| Backup codes | Generate one-time recovery codes, store only keyed hashes, and consume atomically. | Ready for review |
+| Passkeys | Register and verify WebAuthn credentials with origin, RP, challenge, signature, and counter checks. | Ready for review |
+| Factor management | Safely list, label, and revoke factors without exposing secrets. | Ready for review |
+| Collision ownership | Reuse proven password/MFA workflows before linking a matching social identity. | Ready for review |
+| Workflow handoff | Return `session_ready` only after required MFA; continue issuing no JWTs before Milestone 6. | Ready for review |
+| Acceptance tests | Prove UC-104 and UC-201 to UC-204 success, replay, expiry, lock, and fallback paths. | Ready for review |
+| UI and documentation | Propose missing MFA/passkey states without changing approved frontend screens. | Ready for review |
 
 ### Completion Checklist
 
-- [x] Unknown users and incorrect passwords have safe, generic behavior.
-- [x] Five failed password attempts trigger a 15-minute temporary lock.
-- [x] Phone login OTPs are hashed, expiring, attempt-limited, and single-use.
-- [x] Device and IP signals influence risk but never authenticate a user alone.
-- [x] High-risk outcomes require MFA rather than creating a session.
-- [x] OIDC state, nonce, PKCE, issuer, audience, and verified-email rules are enforced.
-- [x] Matching social email never auto-links to an existing account.
+- [x] TOTP secrets are encrypted and never returned after initial enrollment setup.
+- [x] A TOTP time step cannot be accepted twice and three failures lock the factor for 15 minutes.
+- [x] Email and SMS challenges are hashed, expiring, attempt-limited, and single-use.
+- [x] Backup recovery codes are shown once, stored only as keyed hashes, and consumed once.
+- [x] Passkeys enforce the expected RP ID, origin, challenge, user verification, and signature counter.
+- [x] WebAuthn and login workflows cannot be replayed.
+- [x] Unknown, expired, locked, and provider-failure paths return safe problem responses.
+- [x] No factor can be enrolled or removed without a valid proven workflow.
 - [x] No access or refresh JWT is issued before Milestone 6.
-- [x] Documentation and UI proposals are reviewed by the project owner.
+- [ ] Documentation and UI proposals are reviewed by the project owner.
 
 ## Work Log
 
@@ -143,6 +144,22 @@ Verify primary identity safely, evaluate bounded login risk, and return a short-
 - Passed 25 fast tests and 12 real PostgreSQL/Redis integration tests, including replay and collision checks.
 - Confirmed Alembic has no schema drift and marked Milestone 4 ready for stakeholder review.
 - Project owner reviewed and approved the complete Milestone 4 delivery for GitHub publication.
+- Merged Milestone 4 pull request #5 into `main` after all GitHub checks passed.
+- Project owner approved starting Milestone 5 planning and implementation.
+- Started Milestone 5 on branch `codex/milestone-5-mfa-passkeys`.
+- Confirmed missing MFA and passkey screens will be documented as proposals only and will not be implemented without owner approval.
+- Selected verified email or phone as the safe first-login bootstrap path when no authenticator or passkey is enrolled.
+- Added reusable MFA controls for email codes, SMS codes, authenticator apps, backup codes, passkeys, factor management, and social-identity ownership proof.
+- Added AES-256-GCM encryption for recoverable authenticator secrets and keyed one-way storage for backup codes.
+- Added one-time Redis workflows, replay protection, attempt limits, and the approved 15-minute authenticator lock after three failures.
+- Added WebAuthn checks for the expected website, origin, challenge, user verification, signature, and credential counter.
+- Added migration `0007_mfa_replay_protection` and confirmed the local PostgreSQL schema has no drift.
+- Added 12 live MFA/passkey API routes while retaining the Milestone 6 boundary: successful MFA returns `session_ready`, not access or refresh tokens.
+- Documented all proposed missing MFA/passkey screens without making frontend visual changes.
+- Passed 40 fast API/security tests and 14 real PostgreSQL/Redis integration tests.
+- Passed Python lint/type checks, web lint/type/test/build, Go tests/vet, documentation validation, OpenAPI parsing, Compose validation, and Docker health checks.
+- Rebuilt the Docker API, confirmed all services are healthy, and verified safe RFC 7807 errors from the live MFA boundary.
+- Marked Milestone 5 ready for stakeholder review; final acceptance remains with the project owner.
 
 ## Decisions
 
@@ -155,8 +172,8 @@ Verify primary identity safely, evaluate bounded login risk, and return a short-
 
 ## Current Blockers or Owner Actions
 
-There are no technical blockers. Local phone and OIDC adapters avoid requiring paid provider credentials during this milestone.
+There are no current owner blockers. Local email/SMS delivery, AES-GCM secret encryption, and browser-standard WebAuthn allow development without paid provider credentials.
 
 ## Next Planned Milestone
 
-After primary authentication is accepted, Milestone 5 will add MFA, authenticator apps, backup methods, and passkeys.
+After MFA and passkeys are accepted, Milestone 6 will add access tokens, refresh rotation, cookies, logout, and session management.
