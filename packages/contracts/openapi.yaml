@@ -866,6 +866,26 @@ paths:
         "401": {$ref: "#/components/responses/Problem"}
         "403": {$ref: "#/components/responses/Problem"}
         "410": {$ref: "#/components/responses/Problem"}
+  /api/v1/privacy/erasures:
+    post:
+      operationId: requestAccountErasure
+      tags: [privacy and auditing]
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErasureRequest"}
+      responses:
+        "202": {$ref: "#/components/responses/PrivacyRequest"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
+        "409": {$ref: "#/components/responses/Problem"}
   /.well-known/jwks.json:
     get:
       operationId: getSigningKeys
@@ -1095,7 +1115,7 @@ components:
     PrivacyRequestResponse:
       type: object
       additionalProperties: false
-      required: [request_id, request_type, state, requested_at, completed_at, artifact_expires_at, failure_code]
+      required: [request_id, request_type, state, requested_at, completed_at, artifact_expires_at, failure_code, backup_purge_due_at]
       properties:
         request_id: {type: string, format: uuid}
         request_type: {type: string, enum: [export, erasure]}
@@ -1104,6 +1124,13 @@ components:
         completed_at: {type: [string, "null"], format: date-time}
         artifact_expires_at: {type: [string, "null"], format: date-time}
         failure_code: {type: [string, "null"]}
+        backup_purge_due_at: {type: [string, "null"], format: date-time}
+    ErasureRequest:
+      type: object
+      additionalProperties: false
+      required: [confirmation]
+      properties:
+        confirmation: {type: string, const: ERASE_MY_ACCOUNT}
     EmailSignupRequest:
       type: object
       additionalProperties: false

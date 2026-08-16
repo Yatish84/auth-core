@@ -145,6 +145,7 @@ class PrivacyRepositoryFake:
         self.collect_calls = 0
         self.request = self._request("processing")
         self.artifact: EncryptedExportArtifact | None = None
+        self.erasure_blocked = False
 
     def _request(self, state: str) -> PrivacyRequestRecord:
         now = datetime.now(UTC)
@@ -213,13 +214,71 @@ class PrivacyRepositoryFake:
             return self.artifact
         return None
 
+    async def get_or_create_erasure(
+        self,
+        user_id: UUID,
+        idempotency_key_hash: str,
+        correlation_id: UUID,
+    ) -> tuple[PrivacyRequestRecord | None, bool]:
+        del idempotency_key_hash, correlation_id
+        if self.erasure_blocked:
+            return None, False
+        self.user_id = user_id
+        self.request = PrivacyRequestRecord(
+            self.request_id,
+            user_id,
+            "erasure",
+            "processing",
+            datetime.now(UTC),
+            None,
+            None,
+            None,
+        )
+        return self.request, True
+
+    async def execute_erasure(
+        self,
+        request_id: UUID,
+        user_id: UUID,
+        pseudonym: str,
+        now: datetime,
+        backup_purge_due_at: datetime,
+        correlation_id: UUID,
+    ) -> PrivacyRequestRecord | None:
+        del pseudonym, correlation_id
+        self.request = PrivacyRequestRecord(
+            request_id,
+            user_id,
+            "erasure",
+            "completed",
+            now,
+            now,
+            None,
+            None,
+            backup_purge_due_at,
+        )
+        return self.request
+
+
+class SessionRevokerFake:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    async def revoke_user_access(self, user_id: UUID, reason: str) -> int:
+        del user_id
+        assert reason == "privacy_erasure"
+        self.calls += 1
+        return 2
+
 
 @pytest.mark.asyncio
 async def test_privacy_export_is_encrypted_and_downloaded_for_owner() -> None:
     repository = PrivacyRepositoryFake()
     owner_claims = claims()
     repository.user_id = owner_claims.user_id
-    control = GDPRControl(repository, CipherFake(), b"idempotency-pepper")
+    control = GDPRControl(
+        repository, CipherFake(), b"idempotency-pepper", SessionRevokerFake()
+    )
 
     request = await control.request_export(owner_claims, "unique-request-key", uuid4())
     download = await control.download_export(owner_claims, request.request_id)
@@ -235,7 +294,9 @@ async def test_duplicate_export_request_reuses_record_without_rebuilding() -> No
     repository = PrivacyRepositoryFake()
     repository.created = False
     repository.request = repository._request("completed")
-    control = GDPRControl(repository, CipherFake(), b"idempotency-pepper")
+    control = GDPRControl(
+        repository, CipherFake(), b"idempotency-pepper", SessionRevokerFake()
+    )
 
     result = await control.request_export(claims(), "same-request-key", uuid4())
 
@@ -248,7 +309,9 @@ async def test_tampered_export_fails_integrity_check() -> None:
     repository = PrivacyRepositoryFake()
     owner_claims = claims()
     repository.user_id = owner_claims.user_id
-    control = GDPRControl(repository, CipherFake(), b"idempotency-pepper")
+    control = GDPRControl(
+        repository, CipherFake(), b"idempotency-pepper", SessionRevokerFake()
+    )
     request = await control.request_export(owner_claims, "tamper-request-key", uuid4())
     assert repository.artifact is not None
     repository.artifact = EncryptedExportArtifact(
@@ -262,3 +325,38 @@ async def test_tampered_export_fails_integrity_check() -> None:
         await control.download_export(owner_claims, request.request_id)
 
     assert raised.value.code is PrivacyErrorCode.EXPORT_INTEGRITY_FAILED
+
+
+@pytest.mark.asyncio
+async def test_erasure_revokes_access_and_sets_backup_purge_deadline() -> None:
+    repository = PrivacyRepositoryFake()
+    revoker = SessionRevokerFake()
+    owner_claims = claims()
+    control = GDPRControl(
+        repository, CipherFake(), b"idempotency-pepper", revoker
+    )
+
+    result = await control.request_erasure(
+        owner_claims, "erasure-request-key", uuid4()
+    )
+
+    assert revoker.calls == 1
+    assert result.state == "completed"
+    assert result.backup_purge_due_at is not None
+    assert result.backup_purge_due_at - result.completed_at >= timedelta(days=29)
+
+
+@pytest.mark.asyncio
+async def test_erasure_requires_organization_ownership_transfer() -> None:
+    repository = PrivacyRepositoryFake()
+    repository.erasure_blocked = True
+    revoker = SessionRevokerFake()
+    control = GDPRControl(
+        repository, CipherFake(), b"idempotency-pepper", revoker
+    )
+
+    with pytest.raises(PrivacyError) as raised:
+        await control.request_erasure(claims(), "blocked-erasure-key", uuid4())
+
+    assert raised.value.code is PrivacyErrorCode.OWNERSHIP_TRANSFER_REQUIRED
+    assert revoker.calls == 0

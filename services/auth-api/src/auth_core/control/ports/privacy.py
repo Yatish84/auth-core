@@ -30,6 +30,10 @@ class PrivacyCipher(Protocol):
     def decrypt(self, ciphertext: bytes, associated_data: bytes) -> bytes: ...
 
 
+class PrivacySessionRevoker(Protocol):
+    async def revoke_user_access(self, user_id: UUID, reason: str) -> int: ...
+
+
 class PrivacyRepository(Protocol):
     async def get_or_create_export(
         self,
@@ -62,3 +66,20 @@ class PrivacyRepository(Protocol):
     async def get_export_artifact(
         self, user_id: UUID, request_id: UUID, now: datetime
     ) -> EncryptedExportArtifact | None: ...
+
+    async def get_or_create_erasure(
+        self,
+        user_id: UUID,
+        idempotency_key_hash: str,
+        correlation_id: UUID,
+    ) -> tuple[PrivacyRequestRecord | None, bool]: ...
+
+    async def execute_erasure(
+        self,
+        request_id: UUID,
+        user_id: UUID,
+        pseudonym: str,
+        now: datetime,
+        backup_purge_due_at: datetime,
+        correlation_id: UUID,
+    ) -> PrivacyRequestRecord | None: ...

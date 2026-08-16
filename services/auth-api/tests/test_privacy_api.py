@@ -175,3 +175,56 @@ async def test_export_download_streams_json_as_attachment() -> None:
     assert response.json() == {"profile": {}}
     assert "attachment" in response.headers["content-disposition"]
     assert response.headers["cache-control"] == "no-store"
+
+
+@pytest.mark.asyncio
+async def test_erasure_requires_explicit_confirmation_and_idempotency() -> None:
+    now = datetime.now(UTC)
+    record = PrivacyRequestRecord(
+        uuid4(),
+        uuid4(),
+        "erasure",
+        "completed",
+        now,
+        now,
+        None,
+        None,
+        now + timedelta(days=30),
+    )
+    with (
+        patch(
+            "auth_core.boundary.http.privacy.access_claims",
+            new_callable=AsyncMock,
+            return_value=strong_claims(),
+        ),
+        patch(
+            "auth_core.boundary.http.privacy.gdpr_control.request_erasure",
+            new_callable=AsyncMock,
+            return_value=record,
+        ) as request_erasure,
+    ):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="https://test"
+        ) as client:
+            rejected = await client.post(
+                "/api/v1/privacy/erasures",
+                headers={
+                    "Authorization": "Bearer test",
+                    "Idempotency-Key": "erasure-attempt-001",
+                },
+                json={"confirmation": "DELETE"},
+            )
+            accepted = await client.post(
+                "/api/v1/privacy/erasures",
+                headers={
+                    "Authorization": "Bearer test",
+                    "Idempotency-Key": "erasure-attempt-001",
+                },
+                json={"confirmation": "ERASE_MY_ACCOUNT"},
+            )
+
+    assert rejected.status_code == 422
+    assert accepted.status_code == 202
+    assert accepted.json()["state"] == "completed"
+    assert accepted.json()["backup_purge_due_at"] is not None
+    assert request_erasure.await_args.args[1] == "erasure-attempt-001"

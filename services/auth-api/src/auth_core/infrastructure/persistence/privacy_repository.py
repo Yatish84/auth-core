@@ -2,7 +2,7 @@ import base64
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from auth_core.entity.privacy import (
@@ -15,11 +15,16 @@ from auth_core.entity.privacy import (
 from auth_core.entity.recovery import StaffRole
 from auth_core.infrastructure.persistence.models import (
     AuditLog,
+    ContactChangeRequest,
+    EphemeralToken,
     GDPRRequest,
     Identity,
+    Invitation,
     MFADevice,
     Organization,
     PrivacyExportArtifact,
+    Referral,
+    RefreshTokenFamily,
     RolePermissionCatalog,
     Session,
     StaffRoleBinding,
@@ -381,8 +386,208 @@ class SqlAlchemyPrivacyRepository:
             request.completed_at,
             request.artifact_expires_at,
             request.failure_code,
+            request.backup_purge_due_at,
         )
 
     @staticmethod
     def _time(value: datetime | None) -> str | None:
         return value.isoformat() if value else None
+
+    async def get_or_create_erasure(
+        self,
+        user_id: UUID,
+        idempotency_key_hash: str,
+        correlation_id: UUID,
+    ) -> tuple[PrivacyRequestRecord | None, bool]:
+        async with self._sessions.begin() as database:
+            await set_user_context(database, user_id)
+            existing = await database.scalar(
+                select(GDPRRequest).where(
+                    GDPRRequest.user_id == user_id,
+                    GDPRRequest.request_type == "erasure",
+                    GDPRRequest.idempotency_key_hash == idempotency_key_hash,
+                )
+            )
+            if existing:
+                return self._request(existing), False
+            if await self._has_sole_owned_organization(database, user_id):
+                return None, False
+            request = GDPRRequest(
+                user_id=user_id,
+                request_type="erasure",
+                state="processing",
+                idempotency_key_hash=idempotency_key_hash,
+            )
+            database.add(request)
+            await database.flush()
+            database.add(
+                AuditLog(
+                    actor_user_id=user_id,
+                    subject_user_id=user_id,
+                    event_type="PRIVACY_ERASURE_REQUESTED",
+                    outcome="success",
+                    correlation_id=correlation_id,
+                    metadata_json={"request_id": str(request.gdpr_request_id)},
+                )
+            )
+            return self._request(request), True
+
+    async def execute_erasure(
+        self,
+        request_id: UUID,
+        user_id: UUID,
+        pseudonym: str,
+        now: datetime,
+        backup_purge_due_at: datetime,
+        correlation_id: UUID,
+    ) -> PrivacyRequestRecord | None:
+        async with self._sessions.begin() as database:
+            await set_user_context(database, user_id)
+            request = await database.scalar(
+                select(GDPRRequest)
+                .where(
+                    GDPRRequest.gdpr_request_id == request_id,
+                    GDPRRequest.user_id == user_id,
+                    GDPRRequest.request_type == "erasure",
+                )
+                .with_for_update()
+            )
+            user = await database.get(User, user_id, with_for_update=True)
+            if request is None or user is None:
+                return None
+            if request.state == "completed":
+                return self._request(request)
+            if await self._has_sole_owned_organization(database, user_id):
+                request.state = "failed"
+                request.failure_code = "OWNERSHIP_TRANSFER_REQUIRED"
+                return None
+            previous_email = user.email
+            await database.execute(
+                delete(PrivacyExportArtifact).where(
+                    PrivacyExportArtifact.user_id == user_id
+                )
+            )
+            await database.execute(
+                update(GDPRRequest)
+                .where(
+                    GDPRRequest.user_id == user_id,
+                    GDPRRequest.request_type == "export",
+                )
+                .values(
+                    state="cancelled",
+                    artifact_reference=None,
+                    artifact_expires_at=None,
+                )
+            )
+            for model in (
+                ContactChangeRequest,
+                EphemeralToken,
+                MFADevice,
+                TrustedDevice,
+                StaffRoleBinding,
+                UserRoleBinding,
+            ):
+                await database.execute(delete(model).where(model.user_id == user_id))
+            await database.execute(delete(Identity).where(Identity.user_id == user_id))
+            await database.execute(
+                delete(RefreshTokenFamily).where(RefreshTokenFamily.user_id == user_id)
+            )
+            await database.execute(
+                delete(Referral).where(Referral.referrer_user_id == user_id)
+            )
+            await database.execute(
+                update(Referral)
+                .where(Referral.referred_user_id == user_id)
+                .values(
+                    referred_user_id=None,
+                    invitee_email=f"erased-{pseudonym}@invalid.local",
+                    state="revoked",
+                )
+            )
+            if previous_email:
+                await database.execute(
+                    update(Invitation)
+                    .where(Invitation.invitee_email == previous_email)
+                    .values(
+                        invitee_email=f"erased-{pseudonym}@invalid.local",
+                        state="revoked",
+                    )
+                )
+            await database.execute(
+                update(Organization)
+                .where(
+                    Organization.personal_owner_user_id == user_id,
+                    Organization.workspace_type == "personal",
+                )
+                .values(
+                    name="Anonymized Portfolio",
+                    slug=f"anonymized-{pseudonym}",
+                    state="closed",
+                    subscription_metadata={},
+                )
+            )
+            user.email = None
+            user.given_name = None
+            user.family_name = None
+            user.phone_e164 = None
+            user.state = "anonymized"
+            user.anonymized_at = now
+            user.version += 1
+            request.state = "completed"
+            request.completed_at = now
+            request.backup_purge_due_at = backup_purge_due_at
+            request.artifact_reference = None
+            request.artifact_expires_at = None
+            database.add(
+                AuditLog(
+                    actor_user_id=user_id,
+                    subject_user_id=user_id,
+                    event_type="PRIVACY_ACCOUNT_ERASED",
+                    outcome="success",
+                    correlation_id=correlation_id,
+                    metadata_json={
+                        "request_id": str(request_id),
+                        "backup_purge_due_at": backup_purge_due_at.isoformat(),
+                    },
+                )
+            )
+            return self._request(request)
+
+    @staticmethod
+    async def _has_sole_owned_organization(
+        database: AsyncSession, user_id: UUID
+    ) -> bool:
+        owned_orgs = (
+            await database.scalars(
+                select(UserRoleBinding.org_id)
+                .join(
+                    RolePermissionCatalog,
+                    RolePermissionCatalog.catalog_id == UserRoleBinding.catalog_id,
+                )
+                .join(Organization, Organization.org_id == UserRoleBinding.org_id)
+                .where(
+                    UserRoleBinding.user_id == user_id,
+                    UserRoleBinding.revoked_at.is_(None),
+                    RolePermissionCatalog.role == "OWNER",
+                    Organization.workspace_type == "organization",
+                )
+            )
+        ).all()
+        for org_id in owned_orgs:
+            other_owners = await database.scalar(
+                select(func.count())
+                .select_from(UserRoleBinding)
+                .join(
+                    RolePermissionCatalog,
+                    RolePermissionCatalog.catalog_id == UserRoleBinding.catalog_id,
+                )
+                .where(
+                    UserRoleBinding.org_id == org_id,
+                    UserRoleBinding.user_id != user_id,
+                    UserRoleBinding.revoked_at.is_(None),
+                    RolePermissionCatalog.role == "OWNER",
+                )
+            )
+            if not other_owners:
+                return True
+        return False

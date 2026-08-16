@@ -12,6 +12,8 @@ class PrivacyErrorCode(StrEnum):
     REQUEST_NOT_FOUND = "AUTH_PRIVACY_REQUEST_NOT_FOUND"
     EXPORT_UNAVAILABLE = "AUTH_PRIVACY_EXPORT_UNAVAILABLE"
     EXPORT_INTEGRITY_FAILED = "AUTH_PRIVACY_EXPORT_INTEGRITY_FAILED"
+    OWNERSHIP_TRANSFER_REQUIRED = "AUTH_PRIVACY_OWNERSHIP_TRANSFER_REQUIRED"
+    ERASURE_FAILED = "AUTH_PRIVACY_ERASURE_FAILED"
 
 
 class PrivacyError(Exception):
@@ -60,6 +62,7 @@ class PrivacyRequestRecord:
     completed_at: datetime | None
     artifact_expires_at: datetime | None
     failure_code: str | None
+    backup_purge_due_at: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)

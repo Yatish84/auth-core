@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Annotated, Any, Literal, cast
 from uuid import UUID
 
@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 from auth_core.boundary.http.registration import request_id as correlation_request_id
-from auth_core.boundary.http.session import access_claims
+from auth_core.boundary.http.session import access_claims, session_control
 from auth_core.config import get_settings
 from auth_core.control.privacy import AuditQueryControl, GDPRControl
 from auth_core.entity.privacy import (
@@ -31,6 +31,9 @@ gdpr_control = GDPRControl(
     SqlAlchemyPrivacyRepository(session_factory),
     LocalAESGCMSecretCipher(settings.local_data_encryption_key),
     settings.privacy_idempotency_hmac_secret.encode(),
+    session_control,
+    timedelta(hours=settings.privacy_export_ttl_hours),
+    timedelta(days=settings.privacy_backup_purge_days),
 )
 
 
@@ -59,6 +62,11 @@ class PrivacyRequestResponse(BaseModel):
     completed_at: datetime | None
     artifact_expires_at: datetime | None
     failure_code: str | None
+    backup_purge_due_at: datetime | None
+
+
+class ErasureRequest(BaseModel):
+    confirmation: Literal["ERASE_MY_ACCOUNT"]
 
 
 def problem(
@@ -205,4 +213,27 @@ def privacy_request_model(record: PrivacyRequestRecord) -> PrivacyRequestRespons
         completed_at=record.completed_at,
         artifact_expires_at=record.artifact_expires_at,
         failure_code=record.failure_code,
+        backup_purge_due_at=record.backup_purge_due_at,
     )
+
+
+@router.post("/privacy/erasures", response_model=PrivacyRequestResponse, status_code=202)
+async def request_account_erasure(
+    payload: ErasureRequest,
+    request: Request,
+    idempotency_key: Annotated[
+        str, Header(alias="Idempotency-Key", min_length=8, max_length=128)
+    ],
+    authorization: Annotated[str | None, Header()] = None,
+    x_request_id: Annotated[str | None, Header()] = None,
+) -> PrivacyRequestResponse | JSONResponse:
+    del payload
+    correlation_id = correlation_request_id(x_request_id)
+    try:
+        claims = await access_claims(authorization)
+        record = await gdpr_control.request_erasure(
+            claims, idempotency_key, correlation_id
+        )
+    except (PrivacyError, SessionError) as error:
+        return problem(request, error, correlation_id)
+    return privacy_request_model(record)

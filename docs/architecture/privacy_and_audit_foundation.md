@@ -38,8 +38,6 @@ flowchart LR
 
 ## Remaining Milestone 9 Work
 
-- Account-erasure requests, access revocation, and irreversible anonymization (`UC-602`).
-- Configuration-backed retention and documented backup-expiry operations.
 - Privacy and audit screens only after project-owner design approval.
 
 ## Delivered Data Export Flow
@@ -57,3 +55,19 @@ flowchart LR
 ```
 
 The MVP stores encrypted artifacts in PostgreSQL. The same `PrivacyRepository` and cipher boundaries can use AWS S3 plus KMS in production without changing the web or future mobile API.
+
+## Delivered Account Erasure Flow
+
+```mermaid
+flowchart LR
+    USER["Authenticated user with recent MFA"] --> CONFIRM["Submit ERASE_MY_ACCOUNT plus idempotency key"]
+    CONFIRM --> OWNER{"Last owner of an organization?"}
+    OWNER -- Yes --> TRANSFER["Stop and require ownership transfer"]
+    OWNER -- No --> REVOKE["Revoke all sessions and token families"]
+    REVOKE --> ERASE["Delete credentials, MFA secrets, devices, contact workflows, and export artifacts"]
+    ERASE --> ANON["Remove profile PII and close/anonymize the personal workspace"]
+    ANON --> AUDIT["Preserve pseudonymous immutable audit evidence"]
+    AUDIT --> RETAIN["Record configured backup-purge deadline"]
+```
+
+The retained user UUID is a pseudonymous technical reference, not a usable account. Email, phone, names, login identities, factors, devices, sessions, referrals owned by the user, and export artifacts are removed or irreversibly anonymized. This allows lawful audit evidence to remain immutable without preserving an active identity.

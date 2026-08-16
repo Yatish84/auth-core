@@ -100,4 +100,4 @@ Critical approvals and durable recovery state do not exist only in Redis.
 
 Retention periods are configuration-backed policies requiring legal approval before production. The design separates identity data, security telemetry, audit obligations, and export artifacts so each can have a distinct lawful retention policy.
 
-GDPR erasure disables access, revokes sessions, removes or irreversibly anonymizes PII, preserves legally required pseudonymous audit evidence, and records completion. Backup expiry is handled operationally rather than by mutating immutable snapshots.
+GDPR erasure disables access, revokes sessions, removes or irreversibly anonymizes PII, preserves legally required pseudonymous audit evidence, and records completion plus `backup_purge_due_at`. Backup expiry is handled through monitored AWS lifecycle policies rather than by mutating immutable snapshots from the application.

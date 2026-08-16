@@ -47,27 +47,27 @@ Give users controlled access to their personal data and safe account erasure whi
 | Audit privacy controls | Redact unnecessary sensitive values and prevent access outside the reviewer's permitted scope. | Implemented |
 | Data-export request | Let a reauthenticated user request a machine-readable copy of their stored personal data for UC-601. | Implemented |
 | Protected export artifact | Assemble, encrypt, authorize, expire, and safely download the user's export. | Implemented |
-| Account-erasure request | Let a reauthenticated user request erasure with clear warnings and track its progress for UC-602. | Not started |
-| Anonymization and access removal | Revoke access, remove or irreversibly anonymize personal data, and preserve only lawful pseudonymous evidence. | Not started |
-| Retention and backup expiry | Enforce configurable retention and document the approved operational path for expiring backup copies. | Not started |
-| Tests and documentation | Prove audit authorization, export isolation, artifact expiry, erasure safety, replay protection, and retention behavior. | In progress |
-| UI boundary | Document proposed privacy and audit screens without creating or changing frontend visuals until approved. | Not started |
+| Account-erasure request | Let a reauthenticated user request erasure with clear warnings and track its progress for UC-602. | Implemented |
+| Anonymization and access removal | Revoke access, remove or irreversibly anonymize personal data, and preserve only lawful pseudonymous evidence. | Implemented |
+| Retention and backup expiry | Enforce configurable retention and document the approved operational path for expiring backup copies. | Implemented |
+| Tests and documentation | Prove audit authorization, export isolation, artifact expiry, erasure safety, replay protection, and retention behavior. | Ready for review |
+| UI boundary | Document proposed privacy and audit screens without creating or changing frontend visuals until approved. | Ready for review |
 
 ### Completion Checklist
 
 - [x] Only authorized security reviewers can search audit evidence.
 - [x] Audit results are paginated, filtered safely, and redact unnecessary sensitive values.
 - [x] Audit records remain append-only and cannot be changed through the application.
-- [x] A user must recently reauthenticate before requesting an export; the same rule is reserved for erasure.
+- [x] A user must recently reauthenticate before requesting an export or erasure.
 - [x] A user's export contains only their own permitted data in a machine-readable format.
 - [x] Export artifacts are encrypted, access-controlled, short-lived, and unavailable after expiry.
 - [x] Duplicate export requests are handled safely through idempotency controls.
-- [ ] Erasure immediately disables access and revokes active sessions before anonymization.
-- [ ] Erasure removes or irreversibly anonymizes personal data while preserving only lawful pseudonymous audit evidence.
-- [ ] Privacy-request status clearly reports queued, processing, complete, and failed states without exposing private data.
-- [ ] Retention durations are configuration-backed and remain subject to legal approval before production.
-- [ ] Backup expiry is documented and tested as an operational retention control rather than direct application deletion.
-- [ ] Privacy and audit behavior is reusable by the web client and future mobile app through the same API contracts.
+- [x] Erasure immediately disables access and revokes active sessions before anonymization.
+- [x] Erasure removes or irreversibly anonymizes personal data while preserving only lawful pseudonymous audit evidence.
+- [x] Privacy-request status clearly reports requested, processing, completed, failed, and cancelled states without exposing private data.
+- [x] Retention durations are configuration-backed and remain subject to legal approval before production.
+- [x] Backup expiry is documented and tested as an operational retention control rather than direct application deletion.
+- [x] Privacy and audit behavior is reusable by the web client and future mobile app through the same API contracts.
 - [ ] Documentation and any proposed privacy/audit screens are reviewed by the project owner before UI implementation.
 
 ## Completed Milestone Archive
@@ -521,6 +521,14 @@ Help users safely regain account access while ensuring that powerful support act
 - Expanded the shared web/mobile OpenAPI contract from 56 to 59 paths without creating or changing frontend screens.
 - Passed 11 focused privacy/audit tests and 2 real PostgreSQL tests, including encrypted-at-rest content, idempotent retry, artifact ownership isolation, and tamper detection.
 - Rehearsed a fresh migration upgrade, confirmed zero schema drift, downgraded migration `0011`, and successfully upgraded it again.
+- Added UC-602 account erasure with explicit typed confirmation, recent MFA, idempotency, and owner-only status tracking.
+- Required organization ownership transfer before erasure when the user is the last active owner.
+- Revoked all account sessions before deleting identities, MFA factors, trusted devices, contact workflows, refresh families, personal referrals, and encrypted exports.
+- Removed profile PII, anonymized and closed the personal workspace, and retained only pseudonymous immutable audit evidence.
+- Added configurable export and backup-retention periods plus migration `0012_privacy_erasure_retention` for the recorded backup-purge deadline.
+- Expanded the shared web/mobile OpenAPI contract from 59 to 60 paths without creating or changing frontend screens.
+- Passed 14 focused privacy/audit tests and 4 real PostgreSQL tests, including erasure, evidence retention, and last-owner blocking.
+- Marked the complete Milestone 9 backend and documentation scope ready for project-owner review.
 
 ## Decisions
 

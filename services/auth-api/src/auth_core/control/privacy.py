@@ -7,7 +7,12 @@ from hashlib import sha256
 from typing import Any
 from uuid import UUID
 
-from auth_core.control.ports.privacy import AuditRepository, PrivacyCipher, PrivacyRepository
+from auth_core.control.ports.privacy import (
+    AuditRepository,
+    PrivacyCipher,
+    PrivacyRepository,
+    PrivacySessionRevoker,
+)
 from auth_core.entity.privacy import (
     AuditPage,
     AuditRecord,
@@ -33,9 +38,6 @@ SENSITIVE_METADATA_TERMS = {
     "token",
     "user_agent",
 }
-EXPORT_ARTIFACT_TTL = timedelta(hours=24)
-
-
 class AuditQueryControl:
     def __init__(self, repository: AuditRepository) -> None:
         self._repository = repository
@@ -143,10 +145,16 @@ class GDPRControl:
         repository: PrivacyRepository,
         cipher: PrivacyCipher,
         idempotency_pepper: bytes,
+        session_revoker: PrivacySessionRevoker,
+        export_artifact_ttl: timedelta = timedelta(hours=24),
+        backup_purge_window: timedelta = timedelta(days=30),
     ) -> None:
         self._repository = repository
         self._cipher = cipher
         self._idempotency_pepper = idempotency_pepper
+        self._session_revoker = session_revoker
+        self._export_artifact_ttl = export_artifact_ttl
+        self._backup_purge_window = backup_purge_window
 
     async def request_export(
         self,
@@ -155,7 +163,7 @@ class GDPRControl:
         correlation_id: UUID,
     ) -> PrivacyRequestRecord:
         AuditQueryControl._require_recent_mfa(claims)
-        expires_at = datetime.now(UTC) + EXPORT_ARTIFACT_TTL
+        expires_at = datetime.now(UTC) + self._export_artifact_ttl
         request, created = await self._repository.get_or_create_export(
             claims.user_id,
             self._key_hash(idempotency_key),
@@ -233,8 +241,57 @@ class GDPRControl:
             )
         return ExportDownload(request_id, plaintext, artifact.expires_at)
 
+    async def request_erasure(
+        self,
+        claims: AccessClaims,
+        idempotency_key: str,
+        correlation_id: UUID,
+    ) -> PrivacyRequestRecord:
+        AuditQueryControl._require_recent_mfa(claims)
+        request, created = await self._repository.get_or_create_erasure(
+            claims.user_id,
+            self._key_hash(idempotency_key),
+            correlation_id,
+        )
+        if request is None:
+            raise self._ownership_transfer_required()
+        if not created:
+            return request
+        await self._session_revoker.revoke_user_access(
+            claims.user_id, "privacy_erasure"
+        )
+        now = datetime.now(UTC)
+        try:
+            completed = await self._repository.execute_erasure(
+                request.request_id,
+                claims.user_id,
+                self._pseudonym(claims.user_id),
+                now,
+                now + self._backup_purge_window,
+                correlation_id,
+            )
+        except Exception as error:
+            await self._repository.fail_export(
+                request.request_id, claims.user_id, "ERASURE_FAILED"
+            )
+            raise PrivacyError(
+                PrivacyErrorCode.ERASURE_FAILED,
+                "The account could not be erased safely. Access remains revoked.",
+                500,
+            ) from error
+        if completed is None:
+            raise self._ownership_transfer_required()
+        return completed
+
     def _key_hash(self, key: str) -> str:
         return hmac.new(self._idempotency_pepper, key.encode(), sha256).hexdigest()
+
+    def _pseudonym(self, user_id: UUID) -> str:
+        return hmac.new(
+            self._idempotency_pepper,
+            b"erasure:" + user_id.bytes,
+            sha256,
+        ).hexdigest()[:24]
 
     @staticmethod
     def _associated_data(user_id: UUID, request_id: UUID) -> bytes:
@@ -246,4 +303,12 @@ class GDPRControl:
             PrivacyErrorCode.EXPORT_UNAVAILABLE,
             "The export is unavailable, incomplete, or expired.",
             410,
+        )
+
+    @staticmethod
+    def _ownership_transfer_required() -> PrivacyError:
+        return PrivacyError(
+            PrivacyErrorCode.OWNERSHIP_TRANSFER_REQUIRED,
+            "Transfer ownership of each organization before erasing this account.",
+            409,
         )

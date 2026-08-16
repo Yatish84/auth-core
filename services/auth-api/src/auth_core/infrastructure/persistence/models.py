@@ -563,6 +563,7 @@ class GDPRRequest(Base):
     artifact_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     failure_code: Mapped[str | None] = mapped_column(String(80))
     idempotency_key_hash: Mapped[str | None] = mapped_column(String(128))
+    backup_purge_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class PrivacyExportArtifact(Base):

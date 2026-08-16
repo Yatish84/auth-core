@@ -141,15 +141,19 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 
 | QA area | Check performed | Why it matters | Result |
 |---|---|---|---|
-| Focused privacy tests | Ran 11 control and HTTP tests for audit authorization, redaction, cursors, encrypted export, retry reuse, tamper rejection, and download responses. | Proves the delivered UC-505 and UC-601 behavior before account erasure is added. | Passed |
-| Real database isolation | Ran 2 PostgreSQL integration tests under the restricted `auth_app` role. | Proves audit authorization plus owner-only encrypted export storage against real row-level security. | Passed |
-| Database migrations | Created fresh test databases through migrations `0010` and `0011`, confirmed zero schema drift, then downgraded and re-upgraded `0011`. | Proves the audit policy, privacy request policy, and encrypted artifact table install and reverse safely. | Passed |
+| Focused privacy tests | Ran 14 control and HTTP tests for audit authorization, encrypted export, tamper rejection, explicit erasure confirmation, session revocation, and ownership-transfer blocking. | Proves the delivered UC-505, UC-601, and UC-602 control and API behavior. | Passed |
+| Real database isolation | Ran 4 PostgreSQL tests for audit access, owner-only export storage, erasure, evidence retention, and last-owner blocking. | Proves the complete privacy workflow against real constraints and row-level security. | Passed |
+| Database migrations | Created fresh test databases through migrations `0010` to `0012`, with drift and downgrade/re-upgrade rehearsal. | Proves audit, export, erasure-retention, and row-level policies install and reverse safely. | Passed |
 | Export encryption | Confirmed the owner's plaintext email is absent from stored artifact bytes and that owner/request binding plus digest verification rejects tampering. | Prevents database readers or modified ciphertext from silently exposing or changing an export. | Passed |
 | Idempotency and expiry | Confirmed a repeated key returns the original request and artifacts receive a 24-hour expiry. | Prevents duplicate work and limits the lifetime of downloadable personal data. | Passed |
+| Erasure sequencing | Confirmed session revocation occurs before anonymization and explicit confirmation is mandatory. | Prevents continued account use and accidental destructive requests. | Passed |
+| PII anonymization | Confirmed names, contacts, identities, MFA factors, and trusted devices are removed while immutable erasure evidence remains. | Satisfies the designed right-to-erasure boundary without destroying lawful evidence. | Passed |
+| Organization safety | Confirmed the final active organization owner cannot erase their account before transferring ownership. | Prevents an organization from becoming inaccessible or ownerless. | Passed |
+| Backup retention | Confirmed each completed erasure records the configured 30-day backup-purge deadline. | Gives AWS backup lifecycle controls a measurable deadline without mutating immutable snapshots from the app. | Passed |
 | Focused code quality | Ran Ruff and MyPy against the new privacy and audit modules. | Catches formatting, unsafe typing, and interface mistakes in the changed scope. | Passed |
-| Shared API contract | Parsed the shared OpenAPI contract with 59 paths. | Keeps the website and future mobile app aligned to the same audit and export services. | Passed |
+| Shared API contract | Parsed the shared OpenAPI contract with 60 paths. | Keeps the website and future mobile app aligned to the same audit, export, and erasure services. | Passed |
 | UI boundary | Confirmed no frontend screen or wireframe was created or changed. | Preserves the project owner's design-approval requirement. | Passed |
-| Owner review | Audit-query increment is ready for project-owner review. | Final Milestone 9 acceptance remains pending until export, erasure, and retention work is complete. | In progress |
+| Owner review | Complete Milestone 9 backend and documentation are ready for project-owner review. | Final acceptance remains with the project owner before GitHub merge or UI work. | Awaiting review |
 
 ## Maintenance Rule
 
