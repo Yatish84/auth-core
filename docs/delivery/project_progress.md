@@ -1,6 +1,6 @@
 # Project Progress Tracker
 
-**Last updated:** August 15, 2026
+**Last updated:** August 16, 2026
 
 This file is the simple, ongoing record of what has been planned, what is being built, what has been completed, and what is blocking progress. It will be updated as part of every milestone and important pull request.
 
@@ -22,7 +22,7 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 1. Project foundation | Create the folders, tools, local services, and automatic checks needed for development. | Complete |
 | 2. Data foundation | Create the secure database and temporary storage structures. | Complete |
 | 3. Registration | Allow a user to create and verify an account. | Complete |
-| 4. Login | Allow safe password, phone, and social sign-in. | Not started |
+| 4. Login | Allow safe password, phone, and social sign-in. | Complete |
 | 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Not started |
 | 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Not started |
 | 7. Organizations | Add organizations, invitations, roles, and member removal. | Not started |
@@ -32,37 +32,38 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 11. Public test website | Publish the controlled MVP for stakeholder testing. | Not started |
 | 12. AWS production preparation | Harden and move the system to the final AWS environment. | Not started |
 
-## Current Milestone: 3 - Registration and Verification
+## Current Milestone: 4 - Primary Authentication and Risk
 
 ### Goal
 
-Build one secure registration and contact-verification service that the web app and future mobile app can both use.
+Verify primary identity safely, evaluate bounded login risk, and return a short-lived workflow decision that later MFA and session milestones can consume.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Shared API contracts | Define reusable email and phone registration requests and responses for web and mobile. | Complete |
-| Email registration | Create a pending account after validation, breach checking, and secure password hashing. | Complete |
-| Email verification | Send, resend, expire, and consume single-use verification links. | Complete |
-| Phone registration | Create a pending account and verify ownership using a short-lived OTP. | Complete |
-| Abuse protection | Enforce CAPTCHA boundaries, rate limits, OTP attempts, and safe duplicate handling. | Complete |
-| Provider adapters | Add interchangeable HIBP, CAPTCHA, email, and SMS boundaries with safe local implementations. | Complete |
-| Audit evidence | Record redacted registration and verification outcomes without secrets. | Complete |
-| Acceptance tests | Prove UC-301, UC-302, and UC-304 success and failure paths using PostgreSQL and Redis. | Complete |
-| UI recommendation | Document proposed usability improvements without changing approved wireframes. | Complete |
-| Documentation and CI | Update contracts, traceability, diagrams, developer guidance, and automated checks. | Complete |
+| Password login | Verify active password identities with anti-enumeration timing protection. | Complete |
+| Phone login | Issue and atomically consume short-lived login OTPs. | Complete |
+| Temporary lock | Apply the approved 15-minute lock after excessive failures. | Complete |
+| Risk decision | Evaluate bounded device, IP-change, and velocity signals without treating them as identity. | Complete |
+| Workflow handoff | Return opaque decisions for later MFA or session creation without issuing temporary JWTs. | Complete |
+| Social OIDC | Add provider-neutral state, nonce, PKCE, callback, and verified-profile boundaries. | Complete |
+| Collision protection | Block unsafe social auto-linking and require a future ownership-proof workflow. | Complete |
+| Fallback options | Return safe available methods only for a valid short-lived workflow. | Complete |
+| Acceptance tests | Prove UC-101 to UC-103, UC-105, UC-106, UC-303, and collision safety. | Complete |
+| UI and documentation | Document missing login states without changing approved wireframes. | Complete |
 
 ### Completion Checklist
 
-- [x] Email registration creates a pending account and never stores plaintext passwords.
-- [x] Breached passwords and invalid CAPTCHA proofs are rejected safely.
-- [x] Email verification links are hashed, expiring, single-use, and resendable.
-- [x] Phone OTPs are hashed, rate-limited, attempt-limited, and short-lived.
-- [x] Duplicate and unknown-contact responses do not leak unsafe account details.
-- [x] Web and future mobile clients share the same versioned API contract.
-- [x] UC-301, UC-302, and UC-304 acceptance tests pass with real PostgreSQL and Redis.
-- [x] Documentation and UI recommendations are reviewed.
+- [x] Unknown users and incorrect passwords have safe, generic behavior.
+- [x] Five failed password attempts trigger a 15-minute temporary lock.
+- [x] Phone login OTPs are hashed, expiring, attempt-limited, and single-use.
+- [x] Device and IP signals influence risk but never authenticate a user alone.
+- [x] High-risk outcomes require MFA rather than creating a session.
+- [x] OIDC state, nonce, PKCE, issuer, audience, and verified-email rules are enforced.
+- [x] Matching social email never auto-links to an existing account.
+- [x] No access or refresh JWT is issued before Milestone 6.
+- [x] Documentation and UI proposals are reviewed by the project owner.
 
 ## Work Log
 
@@ -122,6 +123,27 @@ Build one secure registration and contact-verification service that the web app 
 - Marked Milestone 3 ready for stakeholder review; final acceptance remains with the project owner.
 - Project owner reviewed the plain-language delivery summary and accepted Milestone 3 for GitHub publication.
 
+### August 16, 2026
+
+- Merged Milestone 3 pull request #4 into `main` after all GitHub checks passed.
+- Project owner approved the complete Milestone 4 primary-authentication scope.
+- Approved a 15-minute temporary login lock after excessive failures.
+- Approved Google-first staging while keeping provider-neutral Apple and Microsoft boundaries.
+- Confirmed MFA completion remains in Milestone 5 and JWT/session issuance remains in Milestone 6.
+- Received permission to document missing login UI proposals without implementing visual changes.
+- Started Milestone 4 on branch `codex/milestone-4-primary-auth`.
+- Added reusable password and verified-phone login controls for web and future mobile clients.
+- Added generic credential failures, constant password-hash work, rate limits, and approved 15-minute temporary locks.
+- Added bounded device and IP-change risk decisions that require later MFA for unfamiliar conditions.
+- Added short-lived opaque workflow handoffs without issuing access or refresh tokens early.
+- Added provider-neutral Google, Apple, and Microsoft OIDC boundaries with local state, nonce, PKCE, issuer, audience, and verified-email checks.
+- Added collision protection that refuses to auto-link a social email to an existing account.
+- Added the Microsoft provider database constraint through migration `0006_login_identity_providers`.
+- Added plain-language delivery documentation and proposed missing login UI states without changing the frontend.
+- Passed 25 fast tests and 12 real PostgreSQL/Redis integration tests, including replay and collision checks.
+- Confirmed Alembic has no schema drift and marked Milestone 4 ready for stakeholder review.
+- Project owner reviewed and approved the complete Milestone 4 delivery for GitHub publication.
+
 ## Decisions
 
 | Decision | Reason |
@@ -133,8 +155,8 @@ Build one secure registration and contact-verification service that the web app 
 
 ## Current Blockers or Owner Actions
 
-There are no technical blockers or owner actions for Milestone 3. No paid provider credentials were needed.
+There are no technical blockers. Local phone and OIDC adapters avoid requiring paid provider credentials during this milestone.
 
 ## Next Planned Milestone
 
-After registration and verification are accepted, Milestone 4 will implement password, phone OTP, and social sign-in with adaptive risk evaluation.
+After primary authentication is accepted, Milestone 5 will add MFA, authenticator apps, backup methods, and passkeys.

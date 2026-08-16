@@ -1,4 +1,5 @@
 import hmac
+import json
 from collections.abc import Awaitable
 from dataclasses import dataclass
 from hashlib import sha256
@@ -13,6 +14,9 @@ WEBAUTHN_CHALLENGE_TTL_SECONDS = 300
 FACTOR_LOCK_TTL_SECONDS = 900
 USER_REVOCATION_TTL_SECONDS = 2_592_000
 RISK_TTL_SECONDS = 2_592_000
+LOGIN_LOCK_TTL_SECONDS = 900
+LOGIN_WORKFLOW_TTL_SECONDS = 300
+OIDC_WORKFLOW_TTL_SECONDS = 300
 
 RATE_LIMIT_SCRIPT = """
 local current = redis.call('INCR', KEYS[1])
@@ -96,6 +100,15 @@ class SecurityKeyFactory:
             f"auth:risk:{self._opaque(user_id)}:{self._opaque(fingerprint)}", RISK_TTL_SECONDS
         )
 
+    def login_lock(self, subject: str) -> RedisKey:
+        return RedisKey(f"auth:lock:login:{self._opaque(subject)}", LOGIN_LOCK_TTL_SECONDS)
+
+    def login_workflow(self, token: str) -> RedisKey:
+        return RedisKey(f"auth:login-workflow:{self._opaque(token)}", LOGIN_WORKFLOW_TTL_SECONDS)
+
+    def oidc_workflow(self, state: str) -> RedisKey:
+        return RedisKey(f"auth:oidc:{self._opaque(state)}", OIDC_WORKFLOW_TTL_SECONDS)
+
 
 class RedisSecurityStore:
     def __init__(self, client: Redis, keys: SecurityKeyFactory) -> None:
@@ -143,6 +156,40 @@ class RedisSecurityStore:
             self._client.eval(RATE_LIMIT_SCRIPT, 1, key.name, str(key.ttl_seconds)),
         )
         return int(result)
+
+    async def reset_rate_limit(self, route: str, subject: str, window_seconds: int) -> None:
+        key = self._keys.rate_limit(route, subject, window_seconds)
+        await self._client.delete(key.name)
+
+    async def lock_login(self, subject: str) -> None:
+        key = self._keys.login_lock(subject)
+        await cast(Awaitable[Any], self._client.set(key.name, "1", ex=key.ttl_seconds))
+
+    async def login_is_locked(self, subject: str) -> bool:
+        key = self._keys.login_lock(subject)
+        return bool(await self._client.exists(key.name))
+
+    async def store_login_workflow(self, token: str, payload: dict[str, Any]) -> None:
+        key = self._keys.login_workflow(token)
+        await cast(
+            Awaitable[Any], self._client.set(key.name, json.dumps(payload), ex=key.ttl_seconds)
+        )
+
+    async def get_login_workflow(self, token: str) -> dict[str, Any] | None:
+        key = self._keys.login_workflow(token)
+        value = await self._client.get(key.name)
+        return cast(dict[str, Any], json.loads(value)) if value is not None else None
+
+    async def store_oidc_workflow(self, state: str, payload: dict[str, Any]) -> None:
+        key = self._keys.oidc_workflow(state)
+        await cast(
+            Awaitable[Any], self._client.set(key.name, json.dumps(payload), ex=key.ttl_seconds)
+        )
+
+    async def consume_oidc_workflow(self, state: str) -> dict[str, Any] | None:
+        key = self._keys.oidc_workflow(state)
+        value = await self._client.getdel(key.name)
+        return cast(dict[str, Any], json.loads(value)) if value is not None else None
 
     async def revoke_access_token(self, jti: UUID, remaining_lifetime: int) -> None:
         key = self._keys.access_revocation(jti, remaining_lifetime)

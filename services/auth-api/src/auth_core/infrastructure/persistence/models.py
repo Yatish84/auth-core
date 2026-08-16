@@ -67,7 +67,8 @@ class Identity(TimestampMixin, Base):
     __table_args__ = (
         UniqueConstraint("provider", "provider_subject"),
         CheckConstraint(
-            "provider IN ('password', 'google', 'apple', 'phone')", name="provider_valid"
+            "provider IN ('password', 'google', 'apple', 'microsoft', 'phone')",
+            name="provider_valid",
         ),
         CheckConstraint(
             "(provider = 'password' AND password_hash IS NOT NULL) OR "
