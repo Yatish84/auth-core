@@ -25,46 +25,51 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 4. Login | Allow safe password, phone, and social sign-in. | Complete |
 | 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Complete |
 | 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Complete |
-| 7. Organizations | Add organizations, invitations, roles, and member removal. | In progress |
+| 7. Personal and organization workspaces | Add private personal portfolios plus optional organizations, invitations, roles, and member removal. | In progress |
 | 8. Recovery and administration | Add password recovery and controlled support actions. | Not started |
 | 9. Privacy and auditing | Add audit review, data export, and account erasure. | Not started |
 | 10. Web experience | Connect all approved website screens to working services. | Not started |
 | 11. Public test website | Publish the controlled MVP for stakeholder testing. | Not started |
 | 12. AWS production preparation | Harden and move the system to the final AWS environment. | Not started |
 
-## Current Milestone: 7 - Organizations and Team Access
+## Current Milestone: 7 - Personal and Organization Workspaces
 
 ### Goal
 
-Let authenticated users create secure business workspaces, invite teammates, assign approved roles, switch workspace context, and immediately remove access when a member leaves.
+Give every user one private workspace for managing their own portfolio, while also allowing them to optionally create or join secure organization workspaces, switch safely between them, and collaborate according to approved roles.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Organization creation | Create an organization and atomically make the creator its owner. | In progress |
-| Role catalog | Use the approved canonical role and permission catalog instead of free-form permissions. | Not started |
-| Invitations | Issue hashed, expiring, single-use invitations with proposed roles and safe email delivery. | Not started |
-| Invitation acceptance | Verify the invitee, consume the invitation once, and create membership bindings safely. | Not started |
-| Organization listing | Return only organizations available to the authenticated user. | Not started |
-| Member management | List members and replace roles only when the acting member has permission. | Not started |
-| Context switching | Verify membership and issue a short-lived access token scoped to the selected organization. | Not started |
-| Member offboarding | Revoke role bindings and active organization-scoped access immediately. | Not started |
-| Tenant isolation | Continue enforcing PostgreSQL row-level organization boundaries in repositories and tests. | Not started |
-| Tests and documentation | Prove UC-305, UC-306, UC-308, and UC-506 including authorization and replay failures. | Not started |
+| Workspace foundation | Define one reusable security model for personal and organization portfolio contexts. | In progress |
+| Personal workspace | Automatically provide exactly one private, owner-only workspace to every user, including existing users. | Not started |
+| Organization creation | Let a user optionally create an organization and atomically become its owner. | Not started |
+| Role catalog | Use the approved canonical organization roles and permissions instead of free-form permissions. | Not started |
+| Invitations | Issue hashed, expiring, single-use organization invitations with proposed roles and safe email delivery. | Not started |
+| Invitation acceptance | Verify the invitee, consume the invitation once, and create organization membership safely. | Not started |
+| Workspace listing | Return the user's personal workspace and only the organizations where they have active membership. | Not started |
+| Member management | List organization members and replace roles only when the acting member has permission. | Not started |
+| Context switching | Verify ownership or membership and issue a short-lived token scoped to the selected workspace. | Not started |
+| Member offboarding | Revoke organization roles and active organization-scoped access immediately. | Not started |
+| Data isolation | Prevent personal and organization portfolio data from crossing workspace boundaries. | Not started |
+| Tests and documentation | Prove personal privacy plus UC-305, UC-306, UC-308, and UC-506 authorization and replay failures. | Not started |
 
 ### Completion Checklist
 
+- [ ] Every new and existing user has exactly one private personal workspace.
+- [ ] Personal workspaces cannot accept invitations, additional members, or organization roles.
+- [ ] A user's personal workspace cannot be transferred, removed, or entered by another user.
 - [ ] Organization creation and owner membership occur in one database transaction.
 - [ ] Invitation tokens are random, hashed at rest, expiring, and single-use.
 - [ ] Invite acceptance cannot grant roles outside the approved catalog.
-- [ ] Users can list and enter only organizations where they have active membership.
-- [ ] Organization-scoped tokens contain the verified organization and approved role claims.
+- [ ] Users can list and enter only their personal workspace and organizations where they have active membership.
+- [ ] Scoped tokens identify the selected workspace, its type, and any verified organization roles.
 - [ ] Unauthorized role changes, member reads, and removals are denied safely.
 - [ ] Removing a member revokes bindings and active tenant access immediately.
 - [ ] A last owner cannot be removed or demoted without a safe ownership transfer.
-- [ ] PostgreSQL tenant-isolation and cross-organization denial tests pass.
-- [ ] Documentation and any proposed organization-management screens are reviewed by the project owner.
+- [ ] PostgreSQL tests prove personal, cross-user, and cross-organization data isolation.
+- [ ] Documentation and any proposed workspace-management screens are reviewed by the project owner before UI implementation.
 
 ## Completed Milestone Archive
 
@@ -383,6 +388,8 @@ Create secure signed-in sessions after approved login and MFA workflows, while g
 - Preserved the complete Milestone 6 goal, work items, and completion checklist in the permanent archive.
 - Started Milestone 7 planning on branch `codex/milestone-7-organizations`.
 - Reconciled the organization scope with UC-305, UC-306, UC-308, and UC-506.
+- Project owner clarified that GroX must also serve individuals who manage only their own financial portfolios.
+- Expanded Milestone 7 to provide every user a private personal workspace while keeping organization participation optional.
 
 ## Decisions
 
@@ -392,6 +399,7 @@ Create secure signed-in sessions after approved login and MFA workflows, while g
 | Build a small working foundation before authentication features. | Finds setup and communication problems early, before security logic becomes complex. |
 | Keep the future mobile application visible in the structure but do not design unapproved screens. | Protects future reuse without creating unauthorized UI work. |
 | Keep session rules shared while delivering refresh tokens differently to web and mobile clients. | Browsers require protected cookies, while mobile apps require operating-system secure storage. |
+| Give every user one private personal workspace and make organizations optional. | Individuals can manage their own portfolios without joining a business, while the same account can later access organization portfolios. |
 | Track progress in this file. | Gives non-technical and technical stakeholders one clear status record. |
 
 ## Current Blockers or Owner Actions
@@ -400,4 +408,4 @@ There are no current owner blockers. Local signing keys will support development
 
 ## Next Planned Milestone
 
-After organizations and team access are accepted, Milestone 8 will add password recovery and controlled administrative support actions.
+After personal and organization workspaces are accepted, Milestone 8 will add password recovery and controlled administrative support actions.
