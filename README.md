@@ -135,6 +135,14 @@ make lint
 make validate
 ```
 
+Database migrations run automatically during `make up`. They can also be managed directly with:
+
+```bash
+make migrate
+make migration-check
+make test-integration
+```
+
 Progress is recorded in [the project progress tracker](./docs/delivery/project_progress.md).
 
 ## Security Notice

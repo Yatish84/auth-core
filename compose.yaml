@@ -34,6 +34,18 @@ services:
       - "${MAILPIT_SMTP_PORT:-1025}:1025"
       - "${MAILPIT_WEB_PORT:-8025}:8025"
 
+  migrate:
+    build:
+      context: ./services/auth-api
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://auth_core:local-development-only@postgres:5432/auth_core}
+    command: ["alembic", "-c", "alembic.ini", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   auth-api:
     build:
       context: ./services/auth-api
@@ -42,6 +54,7 @@ services:
       APP_NAME: ${APP_NAME:-auth-core}
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://auth_core:local-development-only@postgres:5432/auth_core}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_KEY_HMAC_SECRET: ${REDIS_KEY_HMAC_SECRET:-local-development-key-change-me}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
     ports:
       - "${AUTH_API_PORT:-8000}:8000"
@@ -50,6 +63,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live')"]
       interval: 10s

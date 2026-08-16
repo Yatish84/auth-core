@@ -1,4 +1,4 @@
-.PHONY: setup up down logs test lint validate health
+.PHONY: setup up down logs test test-integration lint validate migrate migration-check health
 
 setup:
 	corepack enable
@@ -16,9 +16,12 @@ logs:
 	docker compose logs -f
 
 test:
-	uv run --project services/auth-api pytest
+	uv run --project services/auth-api pytest -c services/auth-api/pyproject.toml
 	pnpm test:web
 	cd services/jwt-verifier && go test ./...
+
+test-integration:
+	uv run --project services/auth-api pytest -c services/auth-api/pyproject.toml -m integration
 
 lint:
 	uv run --project services/auth-api ruff check services/auth-api
@@ -30,6 +33,13 @@ lint:
 validate:
 	python3 scripts/validate_docs.py
 	docker compose config --quiet
+	uv run --project services/auth-api alembic -c services/auth-api/alembic.ini check
+
+migrate:
+	uv run --project services/auth-api alembic -c services/auth-api/alembic.ini upgrade head
+
+migration-check:
+	uv run --project services/auth-api alembic -c services/auth-api/alembic.ini check
 
 health:
 	curl --fail http://localhost:8000/health/live
