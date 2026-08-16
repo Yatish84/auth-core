@@ -86,6 +86,7 @@ async def test_real_email_mfa_totp_enrollment_and_backup_storage(
         store,
         "http://localhost:3000/verify-email",
         b"integration-mfa-otp-pepper",
+        b"integration-referral-pepper",
     )
     login = LoginControl(
         SqlAlchemyLoginRepository(sessions),

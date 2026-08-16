@@ -45,6 +45,7 @@ class RegistrationControl:
         redis_store: RedisSecurityStore,
         verification_base_url: str,
         otp_pepper: bytes,
+        referral_token_pepper: bytes,
     ) -> None:
         self._repository = repository
         self._password_hasher = password_hasher
@@ -55,6 +56,7 @@ class RegistrationControl:
         self._redis_store = redis_store
         self._verification_base_url = verification_base_url.rstrip("/")
         self._otp_pepper = otp_pepper
+        self._referral_token_pepper = referral_token_pepper
 
     async def register_email(
         self,
@@ -65,6 +67,7 @@ class RegistrationControl:
         captcha_token: str,
         remote_ip: str | None,
         correlation_id: UUID | None = None,
+        referral_token: str | None = None,
     ) -> RegistrationAccepted:
         normalized_email = normalize_email(email)
         await self._verify_captcha(captcha_token, remote_ip, "signup_email")
@@ -100,6 +103,7 @@ class RegistrationControl:
                 token_hash,
                 expires_at,
                 event_id,
+                self._referral_hash(referral_token) if referral_token else None,
             )
         except DuplicateContactError:
             return RegistrationAccepted()
@@ -259,6 +263,9 @@ class RegistrationControl:
 
     def _otp_hash(self, code: str) -> str:
         return hmac.new(self._otp_pepper, code.encode(), sha256).hexdigest()
+
+    def _referral_hash(self, token: str) -> str:
+        return hmac.new(self._referral_token_pepper, token.encode(), sha256).hexdigest()
 
     @staticmethod
     def _normalize_phone(phone: str) -> str:

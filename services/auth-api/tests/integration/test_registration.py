@@ -65,6 +65,7 @@ def build_control(
         ),
         verification_base_url="http://localhost:3000/verify-email",
         otp_pepper=b"integration-otp-key-long-enough",
+        referral_token_pepper=b"integration-referral-key-long-enough",
     )
     return control, email, sms
 

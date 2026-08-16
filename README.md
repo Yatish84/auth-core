@@ -2,7 +2,7 @@
 
 Central authentication, session, organization-access, and user-management engine for the Vittavaan web platform and future mobile application.
 
-> **Current phase:** Milestone 1 project foundation is implemented locally and ready for stakeholder review. Authentication features have not yet been implemented.
+> **Current phase:** Milestone 7 personal and organization workspaces are complete and approved for GitHub merge. Milestone 8 recovery and controlled administration begins next.
 
 ## In Plain Language
 
@@ -15,7 +15,7 @@ The first deliverable will be a responsive web MVP that stakeholders and control
 - Email/password, phone OTP, social OIDC, and passkey authentication.
 - Adaptive risk checks and mandatory multi-factor authentication.
 - Secure access JWTs, refresh-token rotation, replay detection, and session management.
-- Organization invitations, context switching, roles, and offboarding.
+- Private personal portfolio workspaces, optional organizations, privacy-safe referrals, roles, context switching, and offboarding.
 - Password/contact recovery and governed support actions.
 - Four-eyes delayed MFA reset for sensitive administrative recovery.
 - Immutable security audit history and GDPR export/erasure workflows.
@@ -37,6 +37,7 @@ Recommended starting points:
 - [Functional flowcharts](./docs/use-cases/auth-core_functional_flowchart.md)
 - [Implementation roadmap](./docs/delivery/implementation_roadmap.md)
 - [Project progress tracker](./docs/delivery/project_progress.md)
+- [Quality assurance tracker](./docs/delivery/quality_assurance_tracker.md)
 - [Screen inventory and approval register](./docs/product/screen_inventory.md)
 
 ## Architecture
@@ -84,7 +85,7 @@ docs/                        Product, requirements, architecture, operations
 tests/                       Contract, integration, security, and E2E suites
 ```
 
-The Milestone 1 foundation now includes the web, API, JWT verifier, shared contract, local service, and automation structure. Additional package, infrastructure, and cross-service test folders will be added only when their milestones require them.
+The repository now includes the shared foundation plus registration, verification, login, MFA, passkeys, secure sessions, private personal workspaces, optional organization access, and referrals. Additional packages and cross-service tests are added only when a milestone requires them.
 
 ## Delivery Process
 
@@ -95,9 +96,9 @@ The Milestone 1 foundation now includes the web, API, JWT verifier, shared contr
 5. Publish controlled free staging for review.
 6. Complete AWS production hardening, independent security review, and operational readiness.
 
-## Local Foundation Quick Start
+## Local Development Quick Start
 
-Milestone 1 introduces the development foundation. It does not yet contain account registration or login features.
+The local environment runs the web foundation and the backend capabilities delivered through Milestone 7. Approved frontend authentication screens will be connected during the web-experience milestone.
 
 ### Required tools
 
@@ -145,7 +146,7 @@ make test-integration
 
 Registration emails and locally simulated SMS messages can be viewed at `http://localhost:8025`. Local registration requests use the CAPTCHA token `local-development-pass`; this value is never a production credential.
 
-Progress is recorded in [the project progress tracker](./docs/delivery/project_progress.md).
+Progress is recorded in [the project progress tracker](./docs/delivery/project_progress.md), while completed tests and quality checks are recorded in [the quality assurance tracker](./docs/delivery/quality_assurance_tracker.md).
 
 ## Security Notice
 

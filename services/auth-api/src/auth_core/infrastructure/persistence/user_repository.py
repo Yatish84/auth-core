@@ -4,7 +4,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from auth_core.entity.user import UserRecord, UserState, normalize_email
-from auth_core.infrastructure.persistence.models import User
+from auth_core.infrastructure.persistence.models import User, personal_workspace_for
 
 
 class SqlAlchemyUserRepository:
@@ -16,6 +16,7 @@ class SqlAlchemyUserRepository:
             model = User(email=normalize_email(email))
             session.add(model)
             await session.flush()
+            session.add(personal_workspace_for(model))
             return self._to_record(model)
 
     async def get_by_email(self, email: str) -> UserRecord | None:

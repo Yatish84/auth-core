@@ -48,6 +48,9 @@ class LocalRS256TokenProvider:
         client_type: ClientType,
         assurance: tuple[str, ...],
         now: datetime,
+        workspace_id: UUID | None = None,
+        workspace_type: str | None = None,
+        roles: tuple[str, ...] = (),
     ) -> tuple[str, datetime]:
         issued_at = now.astimezone(UTC)
         expires_at = issued_at + self._access_ttl
@@ -64,6 +67,10 @@ class LocalRS256TokenProvider:
             "client_type": client_type.value,
             "amr": list(assurance),
         }
+        if workspace_id is not None and workspace_type is not None:
+            claims["wid"] = str(workspace_id)
+            claims["wtype"] = workspace_type
+            claims["roles"] = list(roles)
         token = jwt.encode(
             claims,
             self._private_key,
@@ -87,6 +94,10 @@ class LocalRS256TokenProvider:
             expires_at = datetime.fromtimestamp(int(payload["exp"]), UTC)
             assurance_value = payload.get("amr", [])
             assurance = tuple(str(item) for item in assurance_value)
+            workspace_id = UUID(str(payload["wid"])) if payload.get("wid") else None
+            workspace_type = str(payload["wtype"]) if payload.get("wtype") else None
+            role_values = payload.get("roles", [])
+            roles = tuple(str(item) for item in role_values)
             return AccessClaims(
                 user_id=UUID(str(payload["sub"])),
                 session_id=UUID(str(payload["sid"])),
@@ -96,6 +107,9 @@ class LocalRS256TokenProvider:
                 expires_at=expires_at,
                 client_type=ClientType(str(payload["client_type"])),
                 assurance=assurance,
+                workspace_id=workspace_id,
+                workspace_type=workspace_type,
+                roles=roles,
             )
         except (InvalidTokenError, KeyError, TypeError, ValueError) as error:
             raise SessionError(

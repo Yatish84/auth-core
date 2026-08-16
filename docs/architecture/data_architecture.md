@@ -20,6 +20,9 @@ erDiagram
     USERS ||--o{ ROLE_BINDINGS : has
     ORGANIZATIONS ||--o{ ROLE_BINDINGS : scopes
     ORGANIZATIONS ||--o{ INVITATIONS : issues
+    USERS ||--|| ORGANIZATIONS : privately_owns
+    USERS ||--o{ REFERRALS : sends
+    USERS o|--o| REFERRALS : attributed_by
     USERS ||--o{ GDPR_REQUESTS : submits
     USERS ||--o{ GOVERNED_REQUESTS : targets
     USERS ||--o{ AUDIT_LOGS : concerns
@@ -40,8 +43,9 @@ erDiagram
 | `sessions` | User-visible active session | Family, client, organization, device, last activity, revocation. |
 | `trusted_devices` | Risk history | Unique user/fingerprint; bounded risk metadata. |
 | `ephemeral_tokens` | Durable verification/reset links | Hash, purpose, expiry, single consumption. |
-| `organizations` | Tenant records | Stable identifier and lifecycle state. |
+| `organizations` | Personal and organization workspace records | Stable identifier, workspace type, lifecycle, and unique private owner. |
 | `invitations` | Organization onboarding | Hashed token, role intent, expiry, acceptance state. |
+| `referrals` | Privacy-safe user acquisition attribution | Hashed token, expiry, one referred account, and bounded milestone status. |
 | `role_permission_catalog` | Canonical role definitions | Versioned module/role/permission mapping. |
 | `user_role_bindings` | User role assignment | Unique active user/org/module/role binding. |
 | `governed_requests` | Four-eyes and delayed actions | Initiator differs from approver; execute-after timestamp. |

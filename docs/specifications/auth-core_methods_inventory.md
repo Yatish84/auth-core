@@ -25,6 +25,8 @@
 | `Session` | `touch`, `revoke` | activity or reason | Enforces idle/absolute lifetime. |
 | `TrustedDevice` | `record_success` | bounded signals | Updated risk history. |
 | `Invitation` | `accept` | token proof and user | Single acceptance before expiry. |
+| `Workspace` | `validate_access` | user and workspace | Personal ownership or active organization membership only. |
+| `Referral` | `claim`, `mark_verified` | token/email/user proof | Single attribution without access rights or login visibility. |
 | `RoleBinding` | `assign`, `revoke` | org/module/role | Catalog-backed tenant permission. |
 | `GovernedRequest` | `initiate` | actor, target, execute-after | Pending action with initiator. |
 | `GovernedRequest` | `approve` | distinct supervisor | Approval without early execution. |
@@ -45,6 +47,8 @@
 | `TokenRefreshControl` | `rotate` | Atomic generation lookup, device binding, replay response, new token pair. |
 | `RecoveryControl` | `request_password_reset`, `reset_password`, `change_contact`, `support_recovery` | Generic responses, single-use tokens, reauthentication, session revocation. |
 | `OrganizationControl` | `create`, `invite`, `accept_invitation`, `switch_context`, `offboard` | Membership, role policy, scoped tokens, tenant revocation. |
+| `WorkspaceControl` | `ensure_personal`, `list`, `switch_context` | Exactly one private personal context plus authorized organizations. |
+| `ReferralControl` | `invite`, `list_status` | Rate limits, token hashing, safe delivery, masked status, no reward calculation. |
 | `RoleControl` | `list_catalog`, `replace_member_roles` | Admin authorization and catalog validation. |
 | `SupportAdminControl` | `unlock`, `suspend`, `initiate_mfa_reset`, `approve_mfa_reset`, `execute_mfa_reset` | Staff roles, four-eyes rule, cooldown, notifications, session termination. |
 | `AuditQueryControl` | `search`, `export` | Filter authorization, pagination, redaction, audit of audit access. |
@@ -57,6 +61,7 @@
 |---|---|
 | `AuthRouter` | Registration, verification, login, federation, MFA, refresh, logout, recovery. |
 | `OrganizationRouter` | Organization, invitation, membership, role, and context endpoints. |
+| `WorkspaceRouter` | Personal/organization workspace listing and personal referral endpoints. |
 | `AdminRouter` | Support, governed reset, suspension, and audit endpoints. |
 | `PrivacyRouter` | Export, erasure, status, and download endpoints. |
 | `JWKSRouter` | Public key discovery. |
@@ -65,6 +70,7 @@
 | `FactorRepository` | MFA and passkey operations without exposing secret plaintext. |
 | `SessionRepository` | Family/generation/session locking, listing, revocation, cap queries. |
 | `OrganizationRepository` | Organizations, invitations, membership, and role bindings. |
+| `WorkspaceRepository` | Personal ownership, authorized workspace listing, and referral attribution. |
 | `GovernanceRepository` | Governed request locking and state transitions. |
 | `AuditRepository` | Append and authorized cursor search only. |
 | `OutboxRepository` | Append, claim, retry, complete, dead-letter. |

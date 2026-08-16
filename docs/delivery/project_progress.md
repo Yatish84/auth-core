@@ -24,47 +24,58 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 3. Registration | Allow a user to create and verify an account. | Complete |
 | 4. Login | Allow safe password, phone, and social sign-in. | Complete |
 | 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Complete |
-| 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Ready for review |
-| 7. Organizations | Add organizations, invitations, roles, and member removal. | Not started |
+| 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Complete |
+| 7. Personal and organization workspaces | Add private portfolios, optional organizations, privacy-safe referrals, roles, and member removal. | Ready for review |
 | 8. Recovery and administration | Add password recovery and controlled support actions. | Not started |
 | 9. Privacy and auditing | Add audit review, data export, and account erasure. | Not started |
 | 10. Web experience | Connect all approved website screens to working services. | Not started |
 | 11. Public test website | Publish the controlled MVP for stakeholder testing. | Not started |
 | 12. AWS production preparation | Harden and move the system to the final AWS environment. | Not started |
 
-## Current Milestone: 6 - Sessions and Token Security
+## Current Milestone: 7 - Personal and Organization Workspaces
 
 ### Goal
 
-Create secure signed-in sessions after approved login and MFA workflows, while giving web and future mobile clients safe token refresh, logout, device visibility, and stolen-token protection.
+Give every user one private workspace for managing their own portfolio, allow optional secure organization collaboration, and let users refer friends without sharing portfolio access or private login activity.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Session creation | Exchange a one-time `session_ready` workflow for a signed access token and protected refresh token. | Ready for review |
-| Signing and JWKS | Sign access tokens with rotating asymmetric keys and publish public verification keys. | Ready for review |
-| Web/mobile delivery | Use a secure browser cookie for web refresh tokens and a JSON response for mobile secure storage. | Ready for review |
-| Refresh rotation | Replace every used refresh token atomically and reject replayed generations. | Ready for review |
-| Theft response | Revoke the complete token family, record an audit alert, and require a new login after reuse. | Ready for review |
-| Logout and revocation | Support current-device logout, all-device logout, and immediate Redis-backed denial. | Ready for review |
-| Session limits | Enforce 15-minute access and idle limits, a 24-hour session limit, a 30-day family ceiling, and maximum 10 sessions. | Ready for review |
-| Device sessions | List safe active-device details and let an owner revoke a selected session. | Ready for review |
-| Go verification | Validate signatures, expiry, audience, issuer, and revocation in the reusable Go gateway. | Ready for review |
-| Tests and documentation | Prove UC-401 to UC-405 and UC-509 across web/mobile, replay, timeout, and revocation paths. | Ready for review |
+| Workspace foundation | Define one reusable security model for personal and organization portfolio contexts. | Ready for review |
+| Personal workspace | Automatically provide exactly one private, owner-only workspace to every user, including existing users. | Ready for review |
+| Personal referrals | Send expiring referral links and track invited, registered, and verified milestones without exposing login activity. | Ready for review |
+| Future reward boundary | Record attribution now but keep undecided incentives, qualification, and reward calculations outside this milestone. | Ready for review |
+| Organization creation | Let a user optionally create an organization and atomically become its owner. | Ready for review |
+| Role catalog | Use the approved canonical organization roles and permissions instead of free-form permissions. | Ready for review |
+| Invitations | Issue hashed, expiring, single-use organization invitations with proposed roles and safe email delivery. | Ready for review |
+| Invitation acceptance | Verify the invitee, consume the invitation once, and create organization membership safely. | Ready for review |
+| Workspace listing | Return the user's personal workspace and only the organizations where they have active membership. | Ready for review |
+| Member management | List organization members and replace roles only when the acting member has permission. | Ready for review |
+| Context switching | Verify ownership or membership and issue a short-lived token scoped to the selected workspace. | Ready for review |
+| Member offboarding | Revoke organization roles and active organization-scoped access immediately. | Ready for review |
+| Data isolation | Prevent personal and organization portfolio data from crossing workspace boundaries. | Ready for review |
+| Tests and documentation | Prove personal privacy plus UC-305, UC-306, UC-308, UC-309, UC-310, and UC-506 authorization and replay failures. | Ready for review |
 
 ### Completion Checklist
 
-- [x] A session can be created only from a valid, single-use `session_ready` workflow.
-- [x] Access tokens are signed asymmetrically and expire within 15 minutes.
-- [x] Refresh tokens are stored only as hashes and rotate atomically after every use.
-- [x] Reusing an older refresh token revokes the complete family and records a theft alert.
-- [x] Browser refresh tokens use `Secure`, `HttpOnly`, `SameSite=Lax` cookies and CSRF protection.
-- [x] Mobile refresh tokens are returned only for secure device storage.
-- [x] Current-device, all-device, selected-session, and timeout revocation paths work immediately.
-- [x] A user cannot exceed 10 active session families.
-- [x] The Go verifier rejects invalid, expired, incorrectly scoped, or revoked access tokens.
-- [ ] Documentation and any proposed session-management screens are reviewed by the project owner.
+- [x] Every new and existing user has exactly one private personal workspace.
+- [x] Personal workspaces cannot accept invitations, additional members, or organization roles.
+- [x] A user's personal workspace cannot be transferred, removed, or entered by another user.
+- [x] Referral tokens are random, hashed at rest, expiring, rate-limited, and never grant workspace access.
+- [x] A referrer sees only masked invited, registered, verified, expired, or revoked status—not login or portfolio activity.
+- [x] Self-referrals and referrals for existing accounts are denied safely.
+- [x] Reward qualification and benefits remain disabled until a separate business plan is approved.
+- [x] Organization creation and owner membership occur in one database transaction.
+- [x] Invitation tokens are random, hashed at rest, expiring, and single-use.
+- [x] Invite acceptance cannot grant roles outside the approved catalog.
+- [x] Users can list and enter only their personal workspace and organizations where they have active membership.
+- [x] Scoped tokens identify the selected workspace, its type, and any verified organization roles.
+- [x] Unauthorized role changes, member reads, and removals are denied safely.
+- [x] Removing a member revokes bindings and active tenant access immediately.
+- [x] A last owner cannot be removed or demoted without a safe ownership transfer.
+- [x] PostgreSQL tests prove personal, cross-user, and cross-organization data isolation.
+- [x] Documentation and proposed workspace-management needs were reviewed by the project owner; no frontend screens were created or changed.
 
 ## Completed Milestone Archive
 
@@ -232,6 +243,40 @@ Add reusable second-factor verification and enrollment so web and future mobile 
 - [x] No access or refresh JWT is issued before Milestone 6.
 - [x] Documentation and UI proposals are reviewed by the project owner.
 
+### Milestone 6 - Sessions and Token Security
+
+#### Goal
+
+Create secure signed-in sessions after approved login and MFA workflows, while giving web and future mobile clients safe token refresh, logout, device visibility, and stolen-token protection.
+
+#### Work Items
+
+| Work item | Simple description | Final status |
+|---|---|---|
+| Session creation | Exchange a one-time `session_ready` workflow for a signed access token and protected refresh token. | Complete |
+| Signing and JWKS | Sign access tokens with rotating asymmetric keys and publish public verification keys. | Complete |
+| Web/mobile delivery | Use a secure browser cookie for web refresh tokens and a JSON response for mobile secure storage. | Complete |
+| Refresh rotation | Replace every used refresh token atomically and reject replayed generations. | Complete |
+| Theft response | Revoke the complete token family, record an audit alert, and require a new login after reuse. | Complete |
+| Logout and revocation | Support current-device logout, all-device logout, and immediate Redis-backed denial. | Complete |
+| Session limits | Enforce 15-minute access and idle limits, a 24-hour session limit, a 30-day family ceiling, and maximum 10 sessions. | Complete |
+| Device sessions | List safe active-device details and let an owner revoke a selected session. | Complete |
+| Go verification | Validate signatures, expiry, audience, issuer, and revocation in the reusable Go gateway. | Complete |
+| Tests and documentation | Prove UC-401 to UC-405 and UC-509 across web/mobile, replay, timeout, and revocation paths. | Complete |
+
+#### Completion Checklist
+
+- [x] A session can be created only from a valid, single-use `session_ready` workflow.
+- [x] Access tokens are signed asymmetrically and expire within 15 minutes.
+- [x] Refresh tokens are stored only as hashes and rotate atomically after every use.
+- [x] Reusing an older refresh token revokes the complete family and records a theft alert.
+- [x] Browser refresh tokens use `Secure`, `HttpOnly`, `SameSite=Lax` cookies and CSRF protection.
+- [x] Mobile refresh tokens are returned only for secure device storage.
+- [x] Current-device, all-device, selected-session, and timeout revocation paths work immediately.
+- [x] A user cannot exceed 10 active session families.
+- [x] The Go verifier rejects invalid, expired, incorrectly scoped, or revoked access tokens.
+- [x] Documentation and proposed session-management screens were reviewed and approved by the project owner.
+
 ## Work Log
 
 ### August 14, 2026
@@ -343,6 +388,30 @@ Add reusable second-factor verification and enrollment so web and future mobile 
 - Passed Python lint/type checks, web lint/type/test/build, Go tests/vet, documentation validation, OpenAPI parsing, and Compose validation.
 - Rebuilt the Docker API and Go verifier and completed a live issue, verify, rotate, old-access denial, replay detection, and family-revocation sequence.
 - Marked Milestone 6 ready for stakeholder review; final acceptance remains with the project owner.
+- Project owner reviewed and approved the complete Milestone 6 scope.
+- Opened pull request #7 and passed all six GitHub quality checks.
+- Merged pull request #7 into `main` with merge commit `78d4620e63aea4f9e3755a0a9941a5e91c71168a`.
+- Preserved the complete Milestone 6 goal, work items, and completion checklist in the permanent archive.
+- Started Milestone 7 planning on branch `codex/milestone-7-organizations`.
+- Reconciled the organization scope with UC-305, UC-306, UC-308, and UC-506.
+- Project owner clarified that GroX must also serve individuals who manage only their own financial portfolios.
+- Expanded Milestone 7 to provide every user a private personal workspace while keeping organization participation optional.
+- Project owner approved adding personal user referrals as a separate acquisition use case from organization invitations.
+- Added UC-310 referral tracking for invitation, profile-created, and profile-verified status; rewards remain future work.
+- Started the Milestone 7 implementation with personal workspace persistence, referral attribution, registration hooks, and shared web/mobile APIs.
+- Added migration `0008_workspaces_and_referrals`, including automatic existing-user backfill and canonical owner/member/viewer permissions.
+- Added `GET /workspaces`, `POST /organizations`, `POST /referrals`, and `GET /referrals` without changing any frontend screen.
+- Connected email registration and verification to referral registration and verification milestones.
+- Expanded the shared OpenAPI contract to 37 paths and documented UC-309 and UC-310 across the SRS, schema, methods, diagrams, roadmap, and traceability matrix.
+- Passed 51 fast Python tests, 20 real PostgreSQL/Redis tests, web tests and production build, Python lint/type checks, Go tests/vet, documentation validation, Compose validation, OpenAPI parsing, migration downgrade/upgrade, and zero schema drift.
+- Added organization invitation, acceptance, member listing, role replacement, workspace switching, and offboarding controls and API boundaries.
+- Added owner/member/viewer catalog enforcement, matching-email acceptance, last-owner protection, and PostgreSQL rejection of collaboration records in personal workspaces.
+- Added workspace-scoped JWT claims and organization-specific Redis revocation to both the Python issuer and reusable Go verifier.
+- Confirmed offboarding invalidates the removed member's organization token while preserving their account, personal workspace, and unrelated sessions.
+- Expanded the shared OpenAPI contract to 43 paths and added the delivered workspace architecture guide without creating frontend screens.
+- Passed the completed Milestone 7 backend with 55 fast Python tests and 22 real PostgreSQL/Redis tests, including invitation replay, role authorization, personal isolation, scoped-token replacement, last-owner protection, and offboarding revocation paths.
+- Project owner approved the complete Milestone 7 delivery and authorized its GitHub pull request and merge.
+- Corrected the root README milestone status and added a permanent milestone-by-milestone Quality Assurance Tracker.
 
 ## Decisions
 
@@ -352,6 +421,9 @@ Add reusable second-factor verification and enrollment so web and future mobile 
 | Build a small working foundation before authentication features. | Finds setup and communication problems early, before security logic becomes complex. |
 | Keep the future mobile application visible in the structure but do not design unapproved screens. | Protects future reuse without creating unauthorized UI work. |
 | Keep session rules shared while delivering refresh tokens differently to web and mobile clients. | Browsers require protected cookies, while mobile apps require operating-system secure storage. |
+| Give every user one private personal workspace and make organizations optional. | Individuals can manage their own portfolios without joining a business, while the same account can later access organization portfolios. |
+| Keep personal referrals separate from organization invitations. | Referrals grow the user base but never grant access to another person's or company's portfolio. |
+| Track referral attribution now and defer rewards. | The business can measure acquisition while incentive rules, fraud controls, and benefits remain unapproved. |
 | Track progress in this file. | Gives non-technical and technical stakeholders one clear status record. |
 
 ## Current Blockers or Owner Actions
@@ -360,4 +432,4 @@ There are no current owner blockers. Local signing keys will support development
 
 ## Next Planned Milestone
 
-After sessions are accepted, Milestone 7 will add organizations, invitations, roles, tenant switching, and member removal.
+After personal and organization workspaces are accepted, Milestone 8 will add password recovery and controlled administrative support actions.

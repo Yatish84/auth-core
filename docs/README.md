@@ -53,6 +53,7 @@ No document in this review set represents a production certification. Security, 
 - [Delivered Primary Authentication Foundation](./architecture/primary_authentication_foundation.md) - Plain-language password, phone, social login, risk, and collision behavior.
 - [Delivered MFA and Passkey Foundation](./architecture/mfa_and_passkey_foundation.md) - Plain-language second-factor, encrypted-secret, backup-code, and WebAuthn behavior.
 - [Delivered Session and Token Foundation](./architecture/session_and_token_foundation.md) - Plain-language token issuance, rotation, revocation, browser/mobile delivery, and Go verification behavior.
+- [Delivered Workspace, Organization, and Referral Foundation](./architecture/workspace_and_referral_foundation.md) - Plain-language personal portfolios, organizations, referrals, roles, switching, and offboarding.
 - [Security Architecture](./architecture/security_architecture.md) - Threat boundaries, controls, token security, and governance.
 - [Client Reuse Strategy](./architecture/client_reuse_strategy.md) - Web-first delivery with future Expo mobile reuse.
 - [Deployment Architecture](./architecture/deployment_architecture.md) - Local, free staging, and AWS production designs.
@@ -65,6 +66,7 @@ No document in this review set represents a production certification. Security, 
 - [Implementation Roadmap](./delivery/implementation_roadmap.md) - Milestones, deliverables, and acceptance gates.
 - [Project Progress Tracker](./delivery/project_progress.md) - Plain-language milestone status, work log, decisions, and blockers.
 - [Testing Strategy](./delivery/testing_strategy.md) - Unit, integration, contract, browser, mobile, and security testing.
+- [Quality Assurance Tracker](./delivery/quality_assurance_tracker.md) - Permanent table of tests and quality checks completed for each milestone.
 - [Environment and Credentials](./operations/environment_and_credentials.md) - Tools, configuration, providers, and secrets.
 - [Git and Documentation Workflow](./operations/git_and_documentation_workflow.md) - Branch, commit, review, and publishing rules.
 - [AWS Production Readiness](./operations/aws_production_readiness.md) - Migration prerequisites and operational controls.

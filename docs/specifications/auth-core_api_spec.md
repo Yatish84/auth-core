@@ -121,10 +121,21 @@ This human-readable contract defines the intended API surface. During implementa
 | GET | `/organizations` | UC-306 | List organizations available to current user. |
 | POST | `/organizations/{org_id}/invitations` | UC-305 | Invite member with proposed roles. |
 | POST | `/organizations/invitations/accept` | UC-305 | Consume invitation and create bindings. |
-| POST | `/auth/org/switch` | UC-306 | Verify membership and issue scoped access token. |
+| POST | `/auth/workspace/switch` | UC-306, UC-309 | Verify personal ownership or organization membership and issue a scoped access token. The legacy `/auth/org/switch` alias remains temporarily available. |
 | GET | `/organizations/{org_id}/members` | UC-305, UC-506 | List members for authorized administrators. |
 | PUT | `/organizations/{org_id}/members/{user_id}/roles` | UC-506 | Replace validated role assignments. |
 | DELETE | `/organizations/{org_id}/members/{user_id}` | UC-308 | Offboard member and revoke tenant access. |
+
+### Personal Workspaces and Referrals
+
+| Method | Path | Use case | Result |
+|---|---|---|---|
+| GET | `/workspaces` | UC-309 | List the caller's private personal workspace and active organization workspaces. |
+| POST | `/referrals` | UC-310 | Send a rate-limited, expiring referral that grants no portfolio access. |
+| GET | `/referrals` | UC-310 | Return only the caller's masked referral statuses: invited, registered, verified, expired, or revoked. |
+| POST | `/auth/signup` with optional `referral_token` | UC-301, UC-310 | Create an independent account and claim valid matching referral attribution. |
+
+Referral status deliberately excludes last-login time, session state, profile details, and portfolio information. Rewards and eligibility calculations are outside the current contract until the business program is approved.
 
 ### Privacy
 

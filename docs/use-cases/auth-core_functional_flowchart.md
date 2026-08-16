@@ -54,16 +54,38 @@ flowchart TD
 ```mermaid
 flowchart TD
     ACTOR([Authenticated actor]) --> ACTION{Action}
-    ACTION -->|Switch| MEMBER[Verify active target membership]
+    ACTION -->|Switch| MEMBER[Verify personal ownership or active target membership]
     MEMBER -->|No| DENY[403 ACCESS_DENIED]
-    MEMBER -->|Yes| ROLES[Load active catalog-backed roles]
-    ROLES --> JWT[Issue new organization-scoped access token]
+    MEMBER -->|Yes| ROLES[Load owner context or active catalog-backed roles]
+    ROLES --> JWT[Revoke prior JTI and issue new workspace-scoped access token]
     ACTION -->|Offboard| ADMIN[Verify admin rights and target rules]
     ADMIN -->|No| DENY
     ADMIN -->|Yes| TX[Revoke role bindings in transaction]
     TX --> REV[Set user/org revocation timestamp]
     REV --> SESSIONS[Revoke organization-scoped sessions]
     SESSIONS --> AUDIT[Append audit and notification event]
+```
+
+## Personal Workspace and Referral Flow
+
+```mermaid
+flowchart TD
+    USER([Verified user]) --> PERSONAL[Ensure one private personal workspace]
+    PERSONAL --> CHOICE{User action}
+    CHOICE -->|Manage own portfolio| PRIVATE[Enter owner-only personal context]
+    CHOICE -->|Create organization| ORG[Create optional organization and owner role]
+    CHOICE -->|Refer a friend| ELIGIBLE{New eligible person?}
+    ELIGIBLE -->|No: self or existing user| DENY[Safe referral denial]
+    ELIGIBLE -->|Yes| LIMIT{Within daily limit?}
+    LIMIT -->|No| RATE[429 retry later]
+    LIMIT -->|Yes| TOKEN[Store hashed 30-day token and send link]
+    TOKEN --> REGISTER{Friend creates matching profile?}
+    REGISTER -->|No| EXPIRE[Expire without reward or access]
+    REGISTER -->|Yes| CLAIM[Attach attribution and create friend's private workspace]
+    CLAIM --> VERIFY{Profile verified?}
+    VERIFY -->|Yes| STATUS[Show masked verified status to referrer]
+    VERIFY -->|Not yet| PENDING[Show masked registered status]
+    STATUS --> FUTURE[Future reward program boundary]
 ```
 
 ## Four-Eyes MFA Reset

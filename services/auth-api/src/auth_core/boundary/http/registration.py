@@ -34,6 +34,7 @@ registration_control = RegistrationControl(
     redis_store=security_store,
     verification_base_url=settings.verification_base_url,
     otp_pepper=settings.otp_hmac_secret.encode(),
+    referral_token_pepper=settings.workspace_token_hmac_secret.encode(),
 )
 
 
@@ -43,6 +44,7 @@ class EmailSignupRequest(BaseModel):
     given_name: str = Field(min_length=1, max_length=120)
     family_name: str = Field(min_length=1, max_length=120)
     captcha_token: str = Field(min_length=1, max_length=2048)
+    referral_token: str | None = Field(default=None, min_length=20, max_length=512)
 
 
 class EmailVerificationRequest(BaseModel):
@@ -135,6 +137,7 @@ async def signup_email(
             payload.captcha_token,
             remote_ip(request),
             correlation_id,
+            payload.referral_token,
         )
     except RegistrationError as error:
         return problem(request, error, correlation_id)

@@ -7,7 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from auth_core.entity.registration import DuplicateContactError, PendingContact
 from auth_core.entity.user import normalize_email
-from auth_core.infrastructure.persistence.models import AuditLog, EphemeralToken, Identity, User
+from auth_core.infrastructure.persistence.models import (
+    AuditLog,
+    EphemeralToken,
+    Identity,
+    Referral,
+    User,
+    personal_workspace_for,
+)
+from auth_core.infrastructure.persistence.tenant_context import set_user_context
 
 
 class SqlAlchemyRegistrationRepository:
@@ -41,6 +49,7 @@ class SqlAlchemyRegistrationRepository:
         token_hash: str,
         expires_at: datetime,
         correlation_id: UUID,
+        referral_token_hash: str | None,
     ) -> UUID:
         try:
             async with self._sessions.begin() as session:
@@ -51,6 +60,13 @@ class SqlAlchemyRegistrationRepository:
                 )
                 session.add(user)
                 await session.flush()
+                session.add(personal_workspace_for(user))
+                await self._claim_referral(
+                    session,
+                    referral_token_hash,
+                    normalize_email(email),
+                    user.user_id,
+                )
                 session.add_all(
                     [
                         Identity(
@@ -138,6 +154,7 @@ class SqlAlchemyRegistrationRepository:
                 return False
             user.state = "active"
             user.version += 1
+            await set_user_context(session, user.user_id)
             await session.execute(
                 update(Identity)
                 .where(Identity.user_id == user.user_id, Identity.provider == "password")
@@ -147,6 +164,14 @@ class SqlAlchemyRegistrationRepository:
                 self._audit(
                     "EMAIL_VERIFIED", "success", correlation_id, user.user_id, {}
                 )
+            )
+            await session.execute(
+                update(Referral)
+                .where(
+                    Referral.referred_user_id == user.user_id,
+                    Referral.state == "registered",
+                )
+                .values(state="verified", verified_at=now)
             )
             return True
 
@@ -166,6 +191,7 @@ class SqlAlchemyRegistrationRepository:
                 )
                 session.add(user)
                 await session.flush()
+                session.add(personal_workspace_for(user))
                 session.add_all(
                     [
                         Identity(
@@ -212,6 +238,34 @@ class SqlAlchemyRegistrationRepository:
         if user is None:
             return None
         return PendingContact(user_id=user.user_id, state=user.state)
+
+    @staticmethod
+    async def _claim_referral(
+        session: AsyncSession,
+        referral_token_hash: str | None,
+        email: str,
+        user_id: UUID,
+    ) -> None:
+        if referral_token_hash is None:
+            return
+        now = datetime.now(UTC)
+        await set_user_context(session, user_id)
+        referral = await session.scalar(
+            select(Referral)
+            .where(Referral.token_hash == referral_token_hash)
+            .with_for_update()
+        )
+        if (
+            referral is None
+            or referral.state != "invited"
+            or referral.expires_at <= now
+            or normalize_email(referral.invitee_email) != email
+            or referral.referrer_user_id == user_id
+        ):
+            return
+        referral.referred_user_id = user_id
+        referral.state = "registered"
+        referral.registered_at = now
 
     @staticmethod
     def _audit(

@@ -185,6 +185,7 @@ class SqlAlchemySessionRepository:
                 )
             )
             active_session.access_jti = new_access_jti
+            active_session.org_id = None
             active_session.last_activity_at = now
             return RotationResult(
                 RotationStatus.ROTATED,
@@ -297,6 +298,39 @@ class SqlAlchemySessionRepository:
                 )
             )
             return value is not None
+
+    async def scope_session(
+        self,
+        user_id: UUID,
+        session_id: UUID,
+        workspace_id: UUID,
+        access_jti: UUID,
+        now: datetime,
+    ) -> UUID | None:
+        async with self._sessions.begin() as database:
+            active_session = await database.scalar(
+                select(Session)
+                .join(
+                    RefreshTokenFamily,
+                    RefreshTokenFamily.family_id == Session.family_id,
+                )
+                .where(
+                    Session.session_id == session_id,
+                    Session.user_id == user_id,
+                    Session.revoked_at.is_(None),
+                    Session.expires_at > now,
+                    RefreshTokenFamily.revoked_at.is_(None),
+                    RefreshTokenFamily.absolute_expires_at > now,
+                )
+                .with_for_update()
+            )
+            if active_session is None:
+                return None
+            previous_jti = active_session.access_jti
+            active_session.org_id = workspace_id
+            active_session.access_jti = access_jti
+            active_session.last_activity_at = now
+            return previous_jti
 
     async def audit(
         self,

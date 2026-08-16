@@ -20,6 +20,7 @@ from auth_core.entity.session import (
     SessionSummary,
     TokenPair,
 )
+from auth_core.entity.workspace import WorkspaceSummary
 
 ACCESS_TTL_SECONDS = 900
 IDLE_TIMEOUT_SECONDS = 900
@@ -197,9 +198,73 @@ class SessionControl:
         revoked_at = await self._redis.user_revoked_at(claims.user_id)
         if revoked_at is not None and claims.issued_at <= revoked_at:
             raise self._token_invalid()
+        if claims.workspace_id is not None and claims.workspace_type == "organization":
+            org_revoked_at = await self._redis.organization_revoked_at(
+                claims.user_id, claims.workspace_id
+            )
+            if org_revoked_at is not None and claims.issued_at <= org_revoked_at:
+                raise self._token_invalid()
         if not await self._repository.session_is_active(claims.session_id, now):
             raise self._token_invalid()
         return claims
+
+    async def issue_workspace_scope(
+        self,
+        claims: AccessClaims,
+        workspace: WorkspaceSummary,
+        correlation_id: UUID,
+    ) -> tuple[str, datetime]:
+        now = datetime.now(UTC)
+        new_jti = uuid4()
+        previous_jti = await self._repository.scope_session(
+            claims.user_id,
+            claims.session_id,
+            workspace.workspace_id,
+            new_jti,
+            now,
+        )
+        if previous_jti is None:
+            raise self._token_invalid()
+        await self._redis.revoke_access_token(previous_jti, ACCESS_TTL_SECONDS)
+        token, expires_at = self._tokens.issue(
+            claims.user_id,
+            claims.session_id,
+            claims.family_id,
+            new_jti,
+            claims.client_type,
+            claims.assurance,
+            now,
+            workspace.workspace_id,
+            workspace.workspace_type.value,
+            workspace.roles,
+        )
+        await self._repository.audit(
+            "WORKSPACE_CONTEXT_SWITCHED",
+            "success",
+            correlation_id,
+            claims.user_id,
+            {
+                "workspace_id": str(workspace.workspace_id),
+                "workspace_type": workspace.workspace_type.value,
+            },
+        )
+        return token, expires_at
+
+    async def revoke_organization_access(
+        self,
+        user_id: UUID,
+        workspace_id: UUID,
+        access_jtis: tuple[UUID, ...],
+    ) -> None:
+        now = datetime.now(UTC)
+        await self._redis.revoke_organization(user_id, workspace_id, now)
+        for access_jti in access_jtis:
+            await self._redis.revoke_access_token(access_jti, ACCESS_TTL_SECONDS)
+
+    async def restore_organization_access(
+        self, user_id: UUID, workspace_id: UUID
+    ) -> None:
+        await self._redis.clear_organization_revocation(user_id, workspace_id)
 
     async def logout(self, claims: AccessClaims, correlation_id: UUID) -> None:
         now = datetime.now(UTC)
