@@ -18,9 +18,9 @@ This file is the simple, ongoing record of what has been planned, what is being 
 
 | Milestone | Plain-language goal | Status |
 |---|---|---|
-| 0. Documentation | Agree on what we are building before writing application code. | Ready for review |
+| 0. Documentation | Agree on what we are building before writing application code. | Complete |
 | 1. Project foundation | Create the folders, tools, local services, and automatic checks needed for development. | Complete |
-| 2. Data foundation | Create the secure database and temporary storage structures. | Not started |
+| 2. Data foundation | Create the secure database and temporary storage structures. | Complete |
 | 3. Registration | Allow a user to create and verify an account. | Not started |
 | 4. Login | Allow safe password, phone, and social sign-in. | Not started |
 | 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Not started |
@@ -32,36 +32,35 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 11. Public test website | Publish the controlled MVP for stakeholder testing. | Not started |
 | 12. AWS production preparation | Harden and move the system to the final AWS environment. | Not started |
 
-## Current Milestone: 1 - Project Foundation
+## Current Milestone: 2 - Data Foundation
 
 ### Goal
 
-Prepare the project's basic structure so a developer can run the website, backend, token-checking service, PostgreSQL, Redis, and test email inbox in a consistent way.
+Create the secure, reusable storage layer that future web and mobile registration, login, session, organization, recovery, and audit workflows will share.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Monorepo folders | Organize the website, backend, future mobile app, shared files, tests, and infrastructure. | Ready for review |
-| Tool versions | Record the required Python, Node.js, Go, and package-manager versions. | Ready for review |
-| Local services | Configure PostgreSQL, Redis, and Mailpit using Docker Compose. | Ready for review |
-| Backend health check | Provide a safe page showing whether the API and its dependencies are running. | Ready for review |
-| Website status page | Show a simple website page that calls the backend health check. | Ready for review |
-| Go service health check | Confirm the future JWT verification component can run independently. | Ready for review |
-| Shared API contract | Document health endpoints in the first machine-readable OpenAPI file. | Ready for review |
-| Automated checks | Configure GitHub to test documentation, Python, web, Go, and containers. | Ready for review |
-| Setup guide | Explain how another developer starts and checks the project. | Ready for review |
-| Local validation | Run the complete connected environment and all available quality checks. | Ready for review |
+| Migration system | Add numbered, repeatable database changes using Alembic. | Complete |
+| Durable tables | Create the approved PostgreSQL tables for identities, security, organizations, governance, privacy, and events. | Complete |
+| Data safety rules | Enforce uniqueness, valid state, secure relationships, and concurrency rules in PostgreSQL. | Complete |
+| Tenant isolation | Prevent one organization from reading or changing another organization's records. | Complete |
+| Audit protection | Prevent application-level alteration or deletion of security audit history. | Complete |
+| Redis security keys | Add reusable expiring structures for OTPs, challenges, limits, revocations, and risk state. | Complete |
+| Repository layer | Add controlled data-access interfaces and PostgreSQL implementations for future workflows. | Complete |
+| Integration tests | Test migrations, constraints, audit immutability, Redis expiry, and tenant isolation with real services. | Complete |
+| CI and documentation | Run persistence checks automatically and explain the delivered storage model in plain language. | Complete |
 
 ### Completion Checklist
 
-- [x] A new developer can follow the setup guide.
-- [x] One command starts all local services.
-- [x] The website opens and displays backend availability.
-- [x] FastAPI reports application, PostgreSQL, and Redis readiness.
-- [x] The Go verifier reports that it is alive and ready.
-- [x] Automated tests and quality checks pass.
-- [x] No credentials are committed.
+- [x] An empty PostgreSQL database upgrades to the latest schema.
+- [x] All approved tables and important constraints exist.
+- [x] Cross-organization reads and writes are rejected.
+- [x] Audit records reject update and delete attempts.
+- [x] Redis security keys use safe identifiers and explicit expiration.
+- [x] Repository and migration integration tests pass.
+- [x] No plaintext secrets or customer data are committed.
 - [x] Documentation is updated and reviewed.
 
 ## Work Log
@@ -86,6 +85,19 @@ Prepare the project's basic structure so a developer can run the website, backen
 - Re-ran Python, web, Go, documentation, Compose, formatting, type, and production-build checks successfully.
 - Marked Milestone 1 ready for stakeholder review; final acceptance remains with the project owner.
 - Project owner reviewed the live foundation page and accepted Milestone 1.
+- Merged the documentation and Milestone 1 pull requests into `main` after all GitHub checks passed.
+- Project owner approved the complete Milestone 2 data-foundation scope.
+- Started Milestone 2 on branch `codex/milestone-2-data-foundation`.
+- Added SQLAlchemy mappings and Alembic migrations for all 19 approved PostgreSQL tables.
+- Added separate migration, application, audit-reader, and emergency database roles.
+- Added row-level organization isolation and immutable audit-record enforcement.
+- Added opaque, expiring Redis key structures for OTP, challenge, rate-limit, revocation, and risk state.
+- Added the user repository boundary with email normalization and optimistic concurrency protection.
+- Added four fast API/storage tests and six real PostgreSQL/Redis integration tests.
+- Confirmed an empty temporary database upgrades fully and Alembic reports no schema drift.
+- Rebuilt the complete Docker stack and confirmed migration completion before a healthy API startup.
+- Marked Milestone 2 ready for stakeholder review; final acceptance remains with the project owner.
+- Project owner reviewed the database visually and accepted Milestone 2 for GitHub publication.
 
 ## Decisions
 
@@ -98,8 +110,8 @@ Prepare the project's basic structure so a developer can run the website, backen
 
 ## Current Blockers or Owner Actions
 
-There are no technical blockers or owner actions for Milestone 1. No cloud credentials were needed.
+There are no technical blockers or owner actions for Milestone 2. No cloud credentials were needed.
 
 ## Next Planned Milestone
 
-After this foundation is accepted, Milestone 2 will create the first secure PostgreSQL and Redis structures using migrations and automated isolation tests.
+After the data foundation is accepted, Milestone 3 will implement account registration and contact verification using the shared storage layer.

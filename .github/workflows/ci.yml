@@ -24,6 +24,33 @@ jobs:
   api:
     name: Python API
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: auth_core
+          POSTGRES_USER: auth_core
+          POSTGRES_PASSWORD: local-development-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U auth_core -d auth_core"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://auth_core:local-development-only@localhost:5432/auth_core
+      TEST_ADMIN_DATABASE_URL: postgresql+asyncpg://auth_core:local-development-only@localhost:5432/postgres
+      TEST_REDIS_URL: redis://localhost:6379/15
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -31,9 +58,12 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --project services/auth-api --all-groups --frozen
+      - run: uv run --project services/auth-api alembic -c services/auth-api/alembic.ini upgrade head
+      - run: uv run --project services/auth-api alembic -c services/auth-api/alembic.ini check
       - run: uv run --project services/auth-api ruff check services/auth-api
       - run: uv run --project services/auth-api mypy services/auth-api/src
-      - run: uv run --project services/auth-api pytest
+      - run: uv run --project services/auth-api pytest -c services/auth-api/pyproject.toml
+      - run: uv run --project services/auth-api pytest -c services/auth-api/pyproject.toml -m integration
 
   web:
     name: Web Application

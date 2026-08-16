@@ -44,6 +44,7 @@ No document in this review set represents a production certification. Security, 
 
 - [System Architecture](./architecture/system_architecture.md) - Context, containers, EBC components, and dependency rules.
 - [Data Architecture](./architecture/data_architecture.md) - PostgreSQL, Redis, audit, encryption, and ERD.
+- [Delivered Persistence Foundation](./architecture/persistence_foundation.md) - Plain-language map of the implemented tables, controls, and test evidence.
 - [Security Architecture](./architecture/security_architecture.md) - Threat boundaries, controls, token security, and governance.
 - [Client Reuse Strategy](./architecture/client_reuse_strategy.md) - Web-first delivery with future Expo mobile reuse.
 - [Deployment Architecture](./architecture/deployment_architecture.md) - Local, free staging, and AWS production designs.

@@ -12,6 +12,7 @@ class Settings(BaseSettings):
         "postgresql+asyncpg://auth_core:local-development-only@localhost:5432/auth_core"
     )
     redis_url: str = "redis://localhost:6379/0"
+    redis_key_hmac_secret: str = "local-development-key-change-me"
     cors_allowed_origins: str = "http://localhost:3000"
 
     @property

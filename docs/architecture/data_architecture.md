@@ -1,5 +1,7 @@
 # Data Architecture
 
+> **Implementation status:** The Milestone 2 PostgreSQL and Redis foundation is implemented locally and documented in [Delivered Persistence Foundation](./persistence_foundation.md).
+
 ## Data Responsibilities
 
 PostgreSQL stores durable identity and governance records. Redis stores expiring, reconstructible security state. Credentials, refresh tokens, OTPs, recovery tokens, and backup codes are never stored in plaintext.
