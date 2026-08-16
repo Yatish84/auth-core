@@ -27,48 +27,45 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Complete |
 | 7. Personal and organization workspaces | Add private portfolios, optional organizations, privacy-safe referrals, roles, and member removal. | Complete |
 | 8. Recovery and administration | Add password recovery and controlled support actions. | Complete |
-| 9. Privacy and auditing | Add audit review, data export, and account erasure. | In progress |
-| 10. Web experience | Connect all approved website screens to working services. | Not started |
+| 9. Privacy and auditing | Add audit review, data export, and account erasure. | Complete |
+| 10. Web experience | Connect all approved website screens to working services. | In progress |
 | 11. Public test website | Publish the controlled MVP for stakeholder testing. | Not started |
 | 12. AWS production preparation | Harden and move the system to the final AWS environment. | Not started |
 
-## Current Milestone: 9 - Privacy and Auditing
+## Current Milestone: 10 - Web Experience
 
 ### Goal
 
-Give users controlled access to their personal data and safe account erasure while giving authorized security reviewers searchable, privacy-conscious audit evidence.
+Turn the approved wireframes and completed reusable services into a clear, accessible, responsive website MVP while preserving the same API contracts for the future mobile application.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Audit-query foundation | Define authorized, paginated, redacted audit searches without weakening immutable audit storage. | Implemented |
-| Authorized audit search | Let approved security auditors filter and review relevant audit evidence for UC-505. | Implemented |
-| Audit privacy controls | Redact unnecessary sensitive values and prevent access outside the reviewer's permitted scope. | Implemented |
-| Data-export request | Let a reauthenticated user request a machine-readable copy of their stored personal data for UC-601. | Implemented |
-| Protected export artifact | Assemble, encrypt, authorize, expire, and safely download the user's export. | Implemented |
-| Account-erasure request | Let a reauthenticated user request erasure with clear warnings and track its progress for UC-602. | Implemented |
-| Anonymization and access removal | Revoke access, remove or irreversibly anonymize personal data, and preserve only lawful pseudonymous evidence. | Implemented |
-| Retention and backup expiry | Enforce configurable retention and document the approved operational path for expiring backup copies. | Implemented |
-| Tests and documentation | Prove audit authorization, export isolation, artifact expiry, erasure safety, replay protection, and retention behavior. | Ready for review |
-| UI boundary | Document proposed privacy and audit screens without creating or changing frontend visuals until approved. | Ready for review |
+| Wireframe reconciliation | Map the supplied PDF screens and documented missing experiences to the completed API workflows. | In progress |
+| Owner design approval | Present the proposed screen list, navigation, and any recommended visual improvements before implementation. | Not started |
+| Shared web foundation | Establish the approved responsive layout, design tokens, reusable components, API client, and safe session handling. | Not started |
+| Registration and verification | Connect approved signup, verification, expiry, and resend experiences. | Not started |
+| Login and extra security | Connect password, phone, social login, MFA, passkey, fallback, and collision-proof experiences. | Not started |
+| Sessions and workspaces | Connect devices, personal portfolio context, organizations, invitations, roles, and referrals. | Not started |
+| Recovery and privacy | Connect password recovery, contact change, privacy export, and account-erasure experiences. | Not started |
+| Staff experiences | Connect only approved protected support, governed reset, and audit-review screens. | Not started |
+| Accessibility and responsiveness | Verify keyboard use, screen readers, contrast, errors, loading states, and mobile-sized browser layouts. | Not started |
+| Browser quality checks | Add focused component and end-to-end tests for approved critical user journeys. | Not started |
 
 ### Completion Checklist
 
-- [x] Only authorized security reviewers can search audit evidence.
-- [x] Audit results are paginated, filtered safely, and redact unnecessary sensitive values.
-- [x] Audit records remain append-only and cannot be changed through the application.
-- [x] A user must recently reauthenticate before requesting an export or erasure.
-- [x] A user's export contains only their own permitted data in a machine-readable format.
-- [x] Export artifacts are encrypted, access-controlled, short-lived, and unavailable after expiry.
-- [x] Duplicate export requests are handled safely through idempotency controls.
-- [x] Erasure immediately disables access and revokes active sessions before anonymization.
-- [x] Erasure removes or irreversibly anonymizes personal data while preserving only lawful pseudonymous audit evidence.
-- [x] Privacy-request status clearly reports requested, processing, completed, failed, and cancelled states without exposing private data.
-- [x] Retention durations are configuration-backed and remain subject to legal approval before production.
-- [x] Backup expiry is documented and tested as an operational retention control rather than direct application deletion.
-- [x] Privacy and audit behavior is reusable by the web client and future mobile app through the same API contracts.
-- [ ] Documentation and any proposed privacy/audit screens are reviewed by the project owner before UI implementation.
+- [ ] Existing wireframes and all documented missing experiences are reconciled into one proposed screen inventory.
+- [ ] The project owner approves the screen inventory, navigation, and visual direction before frontend implementation begins.
+- [ ] Reusable components and API adapters avoid duplicating backend rules in the browser.
+- [ ] Browser session and refresh behavior uses secure cookies and CSRF protection as specified.
+- [ ] User-facing authentication, workspace, recovery, and privacy journeys are connected to the shared API.
+- [ ] Staff-only screens remain inaccessible without the required authenticated staff authority.
+- [ ] Loading, empty, success, retry, expiry, lock, denial, and destructive-warning states are understandable.
+- [ ] Critical journeys are keyboard-accessible and meet approved contrast and screen-reader expectations.
+- [ ] Layouts work on desktop and mobile-sized browsers without creating a separate mobile service layer.
+- [ ] Focused component, API-contract, and browser end-to-end tests pass.
+- [ ] No unapproved screen, interaction, or visual redesign is implemented.
 
 ## Completed Milestone Archive
 
@@ -355,6 +352,44 @@ Help users safely regain account access while ensuring that powerful support act
 - [x] Recovery behavior is reusable by the web client and future mobile app through the same API contracts.
 - [x] Documentation was reviewed and approved by the project owner; no frontend screens were created or changed.
 
+### Milestone 9 - Privacy and Auditing
+
+#### Goal
+
+Give users controlled access to their personal data and safe account erasure while giving authorized security reviewers searchable, privacy-conscious audit evidence.
+
+#### Work Items
+
+| Work item | Simple description | Final status |
+|---|---|---|
+| Audit-query foundation | Define authorized, paginated, redacted audit searches without weakening immutable audit storage. | Complete |
+| Authorized audit search | Let approved security auditors filter and review relevant audit evidence for UC-505. | Complete |
+| Audit privacy controls | Redact unnecessary sensitive values and prevent access outside the reviewer's permitted scope. | Complete |
+| Data-export request | Let a reauthenticated user request a machine-readable copy of their stored personal data for UC-601. | Complete |
+| Protected export artifact | Assemble, encrypt, authorize, expire, and safely download the user's export. | Complete |
+| Account-erasure request | Let a reauthenticated user request erasure with clear warnings and track its progress for UC-602. | Complete |
+| Anonymization and access removal | Revoke access, remove or irreversibly anonymize personal data, and preserve only lawful pseudonymous evidence. | Complete |
+| Retention and backup expiry | Enforce configurable retention and document the approved operational path for expiring backup copies. | Complete |
+| Tests and documentation | Prove audit authorization, export isolation, artifact expiry, erasure safety, replay protection, and retention behavior. | Complete |
+| UI boundary | Document proposed privacy and audit screens without creating or changing frontend visuals until approved. | Complete |
+
+#### Completion Checklist
+
+- [x] Only authorized security reviewers can search audit evidence.
+- [x] Audit results are paginated, filtered safely, and redact unnecessary sensitive values.
+- [x] Audit records remain append-only and cannot be changed through the application.
+- [x] A user must recently reauthenticate before requesting an export or erasure.
+- [x] A user's export contains only their own permitted data in a machine-readable format.
+- [x] Export artifacts are encrypted, access-controlled, short-lived, and unavailable after expiry.
+- [x] Duplicate export requests are handled safely through idempotency controls.
+- [x] Erasure immediately disables access and revokes active sessions before anonymization.
+- [x] Erasure removes or irreversibly anonymizes personal data while preserving only lawful pseudonymous audit evidence.
+- [x] Privacy-request status clearly reports requested, processing, completed, failed, and cancelled states without exposing private data.
+- [x] Retention durations are configuration-backed and remain subject to legal approval before production.
+- [x] Backup expiry is documented and tested as an operational retention control rather than direct application deletion.
+- [x] Privacy and audit behavior is reusable by the web client and future mobile app through the same API contracts.
+- [x] Documentation was reviewed and approved by the project owner; no frontend screens were created or changed.
+
 ## Work Log
 
 ### August 14, 2026
@@ -529,6 +564,13 @@ Help users safely regain account access while ensuring that powerful support act
 - Expanded the shared web/mobile OpenAPI contract from 59 to 60 paths without creating or changing frontend screens.
 - Passed 14 focused privacy/audit tests and 4 real PostgreSQL tests, including erasure, evidence retention, and last-owner blocking.
 - Marked the complete Milestone 9 backend and documentation scope ready for project-owner review.
+- Project owner approved the complete Milestone 9 delivery and authorized its GitHub publication and merge.
+- Opened Milestone 9 pull request #10; the first Python CI run exposed a stale 22-table expectation after the intentional 23rd table was added.
+- Corrected only the schema-count and head-revision expectations, passed all 5 focused persistence tests, and pushed the correction.
+- Passed all six protected GitHub quality checks on the corrected pull request.
+- Merged pull request #10 into `main` with merge commit `2613681ac55700cafb37af5f601c55761d1068ad`.
+- Preserved the complete Milestone 9 goal, work items, and completion checklist in the permanent archive.
+- Started Milestone 10 web-experience planning on branch `codex/milestone-10-web-experience`; no frontend visual change is authorized yet.
 
 ## Decisions
 
@@ -545,8 +587,8 @@ Help users safely regain account access while ensuring that powerful support act
 
 ## Current Blockers or Owner Actions
 
-There are no current owner blockers for local Milestone 9 work. Production legal retention periods, AWS artifact storage, KMS credentials, and immutable audit-retention services are not needed until later deployment milestones. No privacy or audit frontend screen will be created or changed without project-owner approval.
+Milestone 10 planning can proceed, but frontend implementation is intentionally blocked until the project owner reviews and approves the proposed screen inventory, navigation, and visual direction. No AWS or paid-provider credential is needed for this planning step.
 
 ## Next Planned Milestone
 
-After privacy and auditing are accepted, Milestone 10 will connect the approved website screens to the completed reusable services.
+After the approved web experience is implemented and accepted, Milestone 11 will publish a controlled public test website for stakeholder testing.

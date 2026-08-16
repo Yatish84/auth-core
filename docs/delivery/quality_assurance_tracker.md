@@ -153,7 +153,9 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 | Focused code quality | Ran Ruff and MyPy against the new privacy and audit modules. | Catches formatting, unsafe typing, and interface mistakes in the changed scope. | Passed |
 | Shared API contract | Parsed the shared OpenAPI contract with 60 paths. | Keeps the website and future mobile app aligned to the same audit, export, and erasure services. | Passed |
 | UI boundary | Confirmed no frontend screen or wireframe was created or changed. | Preserves the project owner's design-approval requirement. | Passed |
-| Owner review | Complete Milestone 9 backend and documentation are ready for project-owner review. | Final acceptance remains with the project owner before GitHub merge or UI work. | Awaiting review |
+| CI corrective action | The first PR run found a stale 22-table assertion after the encrypted artifact table became table 23; updated only the expected count and migration head, then passed all 5 persistence tests. | Records the failed check and focused correction instead of hiding it. | Passed |
+| GitHub CI | Passed all 6 protected pull-request checks before merge. | Provides an independent automated merge gate. | Passed |
+| Owner review | Reviewed and approved complete Milestone 9; no frontend screen was created or changed. | Confirms privacy and auditing are accepted while respecting the UI approval rule. | Accepted |
 
 ## Maintenance Rule
 
