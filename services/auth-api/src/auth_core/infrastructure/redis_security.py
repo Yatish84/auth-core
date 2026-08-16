@@ -263,3 +263,23 @@ class RedisSecurityStore:
     async def user_revoked_at(self, user_id: UUID) -> datetime | None:
         value = await self._client.get(self._keys.user_revocation(user_id).name)
         return datetime.fromtimestamp(int(value), UTC) if value is not None else None
+
+    async def revoke_organization(
+        self, user_id: UUID, org_id: UUID, issued_before: datetime
+    ) -> None:
+        key = self._keys.organization_revocation(user_id, org_id)
+        timestamp = int(issued_before.astimezone(UTC).timestamp())
+        await cast(
+            Awaitable[Any], self._client.set(key.name, str(timestamp), ex=key.ttl_seconds)
+        )
+
+    async def organization_revoked_at(
+        self, user_id: UUID, org_id: UUID
+    ) -> datetime | None:
+        value = await self._client.get(
+            self._keys.organization_revocation(user_id, org_id).name
+        )
+        return datetime.fromtimestamp(int(value), UTC) if value is not None else None
+
+    async def clear_organization_revocation(self, user_id: UUID, org_id: UUID) -> None:
+        await self._client.delete(self._keys.organization_revocation(user_id, org_id).name)

@@ -55,6 +55,15 @@ class SessionRepository(Protocol):
 
     async def session_is_active(self, session_id: UUID, now: datetime) -> bool: ...
 
+    async def scope_session(
+        self,
+        user_id: UUID,
+        session_id: UUID,
+        workspace_id: UUID,
+        access_jti: UUID,
+        now: datetime,
+    ) -> UUID | None: ...
+
     async def audit(
         self,
         event_type: str,
@@ -75,6 +84,9 @@ class AccessTokenProvider(Protocol):
         client_type: ClientType,
         assurance: tuple[str, ...],
         now: datetime,
+        workspace_id: UUID | None = None,
+        workspace_type: str | None = None,
+        roles: tuple[str, ...] = (),
     ) -> tuple[str, datetime]: ...
 
     def verify(self, token: str, now: datetime) -> AccessClaims: ...
@@ -96,3 +108,13 @@ class SessionSecurityStore(Protocol):
     async def revoke_user(self, user_id: UUID, issued_before: datetime) -> None: ...
 
     async def user_revoked_at(self, user_id: UUID) -> datetime | None: ...
+
+    async def revoke_organization(
+        self, user_id: UUID, org_id: UUID, issued_before: datetime
+    ) -> None: ...
+
+    async def organization_revoked_at(
+        self, user_id: UUID, org_id: UUID
+    ) -> datetime | None: ...
+
+    async def clear_organization_revocation(self, user_id: UUID, org_id: UUID) -> None: ...

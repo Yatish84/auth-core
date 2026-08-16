@@ -54,10 +54,10 @@ flowchart TD
 ```mermaid
 flowchart TD
     ACTOR([Authenticated actor]) --> ACTION{Action}
-    ACTION -->|Switch| MEMBER[Verify active target membership]
+    ACTION -->|Switch| MEMBER[Verify personal ownership or active target membership]
     MEMBER -->|No| DENY[403 ACCESS_DENIED]
-    MEMBER -->|Yes| ROLES[Load active catalog-backed roles]
-    ROLES --> JWT[Issue new organization-scoped access token]
+    MEMBER -->|Yes| ROLES[Load owner context or active catalog-backed roles]
+    ROLES --> JWT[Revoke prior JTI and issue new workspace-scoped access token]
     ACTION -->|Offboard| ADMIN[Verify admin rights and target rules]
     ADMIN -->|No| DENY
     ADMIN -->|Yes| TX[Revoke role bindings in transaction]

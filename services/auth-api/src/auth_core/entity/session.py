@@ -45,6 +45,9 @@ class AccessClaims:
     expires_at: datetime
     client_type: ClientType
     assurance: tuple[str, ...]
+    workspace_id: UUID | None = None
+    workspace_type: str | None = None
+    roles: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

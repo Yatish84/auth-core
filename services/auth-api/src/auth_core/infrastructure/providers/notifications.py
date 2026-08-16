@@ -45,6 +45,21 @@ class MailpitEmailProvider:
         )
         await asyncio.to_thread(self._send, message)
 
+    async def send_organization_invitation(
+        self, email: str, organization_name: str, invitation_url: str
+    ) -> None:
+        message = EmailMessage()
+        message["From"] = self._sender
+        message["To"] = email
+        message["Subject"] = f"Invitation to join {organization_name}"
+        message.set_content(
+            f"You have been invited to join {organization_name} on Vittavaan.\n\n"
+            f"Review the invitation using this single-use link:\n{invitation_url}\n\n"
+            "This invitation expires in seven days. It does not provide access until "
+            "you sign in with the invited email and accept it."
+        )
+        await asyncio.to_thread(self._send, message)
+
     def _send(self, message: EmailMessage) -> None:
         with smtplib.SMTP(self._host, self._port, timeout=5) as client:
             client.send_message(message)

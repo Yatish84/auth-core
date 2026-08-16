@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     local_captcha_token: str = "local-development-pass"
     verification_base_url: str = "http://localhost:3000/verify-email"
     referral_base_url: str = "http://localhost:3000/signup"
+    organization_invitation_base_url: str = "http://localhost:3000/organization-invitation"
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     email_sender: str = "no-reply@local.vittavaan.test"

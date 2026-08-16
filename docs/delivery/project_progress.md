@@ -46,35 +46,35 @@ Give every user one private workspace for managing their own portfolio, allow op
 | Personal workspace | Automatically provide exactly one private, owner-only workspace to every user, including existing users. | Ready for review |
 | Personal referrals | Send expiring referral links and track invited, registered, and verified milestones without exposing login activity. | Ready for review |
 | Future reward boundary | Record attribution now but keep undecided incentives, qualification, and reward calculations outside this milestone. | Ready for review |
-| Organization creation | Let a user optionally create an organization and atomically become its owner. | In progress |
-| Role catalog | Use the approved canonical organization roles and permissions instead of free-form permissions. | In progress |
-| Invitations | Issue hashed, expiring, single-use organization invitations with proposed roles and safe email delivery. | Not started |
-| Invitation acceptance | Verify the invitee, consume the invitation once, and create organization membership safely. | Not started |
-| Workspace listing | Return the user's personal workspace and only the organizations where they have active membership. | In progress |
-| Member management | List organization members and replace roles only when the acting member has permission. | Not started |
-| Context switching | Verify ownership or membership and issue a short-lived token scoped to the selected workspace. | Not started |
-| Member offboarding | Revoke organization roles and active organization-scoped access immediately. | Not started |
-| Data isolation | Prevent personal and organization portfolio data from crossing workspace boundaries. | In progress |
-| Tests and documentation | Prove personal privacy plus UC-305, UC-306, UC-308, UC-309, UC-310, and UC-506 authorization and replay failures. | In progress |
+| Organization creation | Let a user optionally create an organization and atomically become its owner. | Ready for review |
+| Role catalog | Use the approved canonical organization roles and permissions instead of free-form permissions. | Ready for review |
+| Invitations | Issue hashed, expiring, single-use organization invitations with proposed roles and safe email delivery. | Ready for review |
+| Invitation acceptance | Verify the invitee, consume the invitation once, and create organization membership safely. | Ready for review |
+| Workspace listing | Return the user's personal workspace and only the organizations where they have active membership. | Ready for review |
+| Member management | List organization members and replace roles only when the acting member has permission. | Ready for review |
+| Context switching | Verify ownership or membership and issue a short-lived token scoped to the selected workspace. | Ready for review |
+| Member offboarding | Revoke organization roles and active organization-scoped access immediately. | Ready for review |
+| Data isolation | Prevent personal and organization portfolio data from crossing workspace boundaries. | Ready for review |
+| Tests and documentation | Prove personal privacy plus UC-305, UC-306, UC-308, UC-309, UC-310, and UC-506 authorization and replay failures. | Ready for review |
 
 ### Completion Checklist
 
 - [x] Every new and existing user has exactly one private personal workspace.
-- [ ] Personal workspaces cannot accept invitations, additional members, or organization roles.
-- [ ] A user's personal workspace cannot be transferred, removed, or entered by another user.
+- [x] Personal workspaces cannot accept invitations, additional members, or organization roles.
+- [x] A user's personal workspace cannot be transferred, removed, or entered by another user.
 - [x] Referral tokens are random, hashed at rest, expiring, rate-limited, and never grant workspace access.
 - [x] A referrer sees only masked invited, registered, verified, expired, or revoked status—not login or portfolio activity.
 - [x] Self-referrals and referrals for existing accounts are denied safely.
 - [x] Reward qualification and benefits remain disabled until a separate business plan is approved.
 - [x] Organization creation and owner membership occur in one database transaction.
-- [ ] Invitation tokens are random, hashed at rest, expiring, and single-use.
-- [ ] Invite acceptance cannot grant roles outside the approved catalog.
-- [ ] Users can list and enter only their personal workspace and organizations where they have active membership.
-- [ ] Scoped tokens identify the selected workspace, its type, and any verified organization roles.
-- [ ] Unauthorized role changes, member reads, and removals are denied safely.
-- [ ] Removing a member revokes bindings and active tenant access immediately.
-- [ ] A last owner cannot be removed or demoted without a safe ownership transfer.
-- [ ] PostgreSQL tests prove personal, cross-user, and cross-organization data isolation.
+- [x] Invitation tokens are random, hashed at rest, expiring, and single-use.
+- [x] Invite acceptance cannot grant roles outside the approved catalog.
+- [x] Users can list and enter only their personal workspace and organizations where they have active membership.
+- [x] Scoped tokens identify the selected workspace, its type, and any verified organization roles.
+- [x] Unauthorized role changes, member reads, and removals are denied safely.
+- [x] Removing a member revokes bindings and active tenant access immediately.
+- [x] A last owner cannot be removed or demoted without a safe ownership transfer.
+- [x] PostgreSQL tests prove personal, cross-user, and cross-organization data isolation.
 - [ ] Documentation and any proposed workspace-management screens are reviewed by the project owner before UI implementation.
 
 ## Completed Milestone Archive
@@ -404,6 +404,12 @@ Create secure signed-in sessions after approved login and MFA workflows, while g
 - Connected email registration and verification to referral registration and verification milestones.
 - Expanded the shared OpenAPI contract to 37 paths and documented UC-309 and UC-310 across the SRS, schema, methods, diagrams, roadmap, and traceability matrix.
 - Passed 51 fast Python tests, 20 real PostgreSQL/Redis tests, web tests and production build, Python lint/type checks, Go tests/vet, documentation validation, Compose validation, OpenAPI parsing, migration downgrade/upgrade, and zero schema drift.
+- Added organization invitation, acceptance, member listing, role replacement, workspace switching, and offboarding controls and API boundaries.
+- Added owner/member/viewer catalog enforcement, matching-email acceptance, last-owner protection, and PostgreSQL rejection of collaboration records in personal workspaces.
+- Added workspace-scoped JWT claims and organization-specific Redis revocation to both the Python issuer and reusable Go verifier.
+- Confirmed offboarding invalidates the removed member's organization token while preserving their account, personal workspace, and unrelated sessions.
+- Expanded the shared OpenAPI contract to 43 paths and added the delivered workspace architecture guide without creating frontend screens.
+- Passed the completed Milestone 7 backend with 55 fast Python tests and 22 real PostgreSQL/Redis tests, including invitation replay, role authorization, personal isolation, scoped-token replacement, last-owner protection, and offboarding revocation paths.
 
 ## Decisions
 

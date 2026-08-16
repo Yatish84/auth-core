@@ -49,6 +49,7 @@ func TestJWTVerifierAcceptsValidTokenAndRejectsRevokedFamily(t *testing.T) {
 		"iss": "https://issuer.test", "aud": "grox-test", "sub": "user-id",
 		"sid": "session-id", "fid": "family-id", "jti": "jti-id",
 		"client_type": "WEB", "amr": []string{"password", "mfa"},
+		"wid": "organization-id", "wtype": "organization", "roles": []string{"VIEWER"},
 		"iat": now.Unix(), "nbf": now.Unix(), "exp": now.Add(15 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
@@ -65,6 +66,16 @@ func TestJWTVerifierAcceptsValidTokenAndRejectsRevokedFamily(t *testing.T) {
 	if verified.UserID != "user-id" || verified.SessionID != "session-id" {
 		t.Fatalf("unexpected claims: %#v", verified)
 	}
+	if verified.WorkspaceID != "organization-id" || len(verified.Roles) != 1 {
+		t.Fatalf("unexpected workspace claims: %#v", verified)
+	}
+
+	organizationKey := verifier.organizationRedisKey("user-id", "organization-id")
+	redisServer.Set(organizationKey, "9999999999")
+	if _, err := verifier.Verify(context.Background(), raw); err == nil {
+		t.Fatal("expected revoked organization scope to be rejected")
+	}
+	redisServer.Del(organizationKey)
 
 	redisServer.Set(verifier.redisKey("auth:revocation:family", "family-id"), "1")
 	if _, err := verifier.Verify(context.Background(), raw); err == nil {

@@ -12,7 +12,7 @@ This matrix ensures every source use case receives a boundary, control, persiste
 | UC-301, UC-302 | Email registration | `/auth/signup`, `/auth/verify/email`, `/auth/verify/email/request` | `RegistrationControl` | users, identities, ephemeral tokens | Signup, verification status | CAPTCHA, HIBP, single-use activation and safe resend |
 | UC-304 | Phone registration | `/auth/signup/phone`, verify phone | `RegistrationControl` | users, phone identity, OTP keys | Phone signup and OTP | E.164, rate limit, uniqueness |
 | UC-305 | Organizations/invitations | `/organizations*` | `OrganizationControl` | orgs, invitations, bindings | Org create/invite/accept | Authorization, expiry, idempotency |
-| UC-306 | Context switching | `/auth/org/switch` | `OrganizationControl` | bindings, sessions | Organization switcher | Membership and scoped claims |
+| UC-306 | Context switching | `/auth/workspace/switch` | `WorkspaceControl`, `SessionControl` | bindings, sessions, org revocation | Workspace switcher | Membership, scoped claims, prior-JTI denial |
 | UC-308 | Offboarding | member DELETE | `OrganizationControl` | bindings, sessions, org revocation | Member administration | Immediate tenant denial only |
 | UC-309 | Personal workspace | `/workspaces` | `WorkspaceControl` | organizations with personal owner | Workspace switcher | Exactly one owner-only workspace; cross-user denial |
 | UC-310 | Personal referrals | `/referrals`, signup referral token | `ReferralControl`, `RegistrationControl` | referrals | Referral status | Hashing, expiry, attribution, privacy, self-referral denial |

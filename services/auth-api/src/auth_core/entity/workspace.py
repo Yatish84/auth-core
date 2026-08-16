@@ -16,6 +16,9 @@ class WorkspaceErrorCode(StrEnum):
     REFERRAL_INELIGIBLE = "AUTH_REFERRAL_INELIGIBLE"
     RATE_LIMITED = "AUTH_REFERRAL_RATE_LIMITED"
     PROVIDER_UNAVAILABLE = "AUTH_PROVIDER_UNAVAILABLE"
+    INVITATION_INVALID = "AUTH_INVITATION_INVALID"
+    MEMBER_NOT_FOUND = "AUTH_MEMBER_NOT_FOUND"
+    LAST_OWNER = "AUTH_LAST_OWNER_REQUIRED"
 
 
 class WorkspaceError(Exception):
@@ -24,6 +27,10 @@ class WorkspaceError(Exception):
         self.code = code
         self.message = message
         self.status_code = status_code
+
+
+class LastOwnerError(Exception):
+    pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,3 +57,35 @@ class ReferralEligibility(StrEnum):
     ELIGIBLE = "eligible"
     SELF = "self"
     EXISTING_USER = "existing_user"
+
+
+class OrganizationRole(StrEnum):
+    OWNER = "OWNER"
+    MEMBER = "MEMBER"
+    VIEWER = "VIEWER"
+
+
+@dataclass(frozen=True, slots=True)
+class InvitationRecord:
+    invitation_id: UUID
+    workspace_id: UUID
+    invitee_email: str
+    role: OrganizationRole
+    state: str
+    created_at: datetime
+    expires_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class MemberSummary:
+    user_id: UUID
+    email: str | None
+    given_name: str | None
+    family_name: str | None
+    roles: tuple[OrganizationRole, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class OffboardResult:
+    user_id: UUID
+    revoked_access_jtis: tuple[UUID, ...]

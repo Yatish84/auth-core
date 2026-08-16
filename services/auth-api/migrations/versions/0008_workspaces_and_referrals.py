@@ -110,6 +110,58 @@ def upgrade() -> None:
     op.execute(
         "GRANT EXECUTE ON FUNCTION auth.user_has_org_membership(uuid, uuid) TO auth_app"
     )
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION auth.organization_invitation_org(candidate_hash text)
+        RETURNS uuid
+        LANGUAGE sql
+        STABLE
+        SECURITY DEFINER
+        SET search_path = auth, pg_temp
+        AS $$
+            SELECT org_id
+            FROM auth.invitations
+            WHERE token_hash = candidate_hash
+              AND state = 'pending'
+              AND expires_at > now()
+            LIMIT 1
+        $$
+        """
+    )
+    op.execute(
+        "REVOKE ALL ON FUNCTION auth.organization_invitation_org(text) FROM PUBLIC"
+    )
+    op.execute(
+        "GRANT EXECUTE ON FUNCTION auth.organization_invitation_org(text) TO auth_app"
+    )
+    op.execute(
+        """
+        CREATE OR REPLACE FUNCTION auth.reject_personal_workspace_collaboration()
+        RETURNS trigger
+        LANGUAGE plpgsql
+        AS $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM auth.organizations
+                WHERE org_id = NEW.org_id AND workspace_type = 'personal'
+            ) THEN
+                RAISE EXCEPTION 'personal workspaces cannot have invitations or role bindings'
+                    USING ERRCODE = '23514';
+            END IF;
+            RETURN NEW;
+        END
+        $$
+        """
+    )
+    for table in ("invitations", "user_role_bindings"):
+        op.execute(
+            f"""
+            CREATE TRIGGER {table}_organization_only
+            BEFORE INSERT OR UPDATE OF org_id ON auth.{table}
+            FOR EACH ROW EXECUTE FUNCTION auth.reject_personal_workspace_collaboration()
+            """
+        )
     op.execute("DROP POLICY organizations_tenant_isolation ON auth.organizations")
     current_org = "NULLIF(current_setting('app.current_org_id', true), '')::uuid"
     current_user = "NULLIF(current_setting('app.current_user_id', true), '')::uuid"
@@ -232,6 +284,10 @@ def downgrade() -> None:
     op.execute("DROP POLICY IF EXISTS referrals_user_isolation ON auth.referrals")
     op.drop_table("referrals", schema="auth")
     op.execute("DROP POLICY organizations_tenant_isolation ON auth.organizations")
+    for table in ("user_role_bindings", "invitations"):
+        op.execute(f"DROP TRIGGER IF EXISTS {table}_organization_only ON auth.{table}")
+    op.execute("DROP FUNCTION IF EXISTS auth.reject_personal_workspace_collaboration()")
+    op.execute("DROP FUNCTION IF EXISTS auth.organization_invitation_org(text)")
     current_org = "NULLIF(current_setting('app.current_org_id', true), '')::uuid"
     op.execute(
         f"""

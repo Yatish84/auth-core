@@ -473,6 +473,128 @@ paths:
               schema: {$ref: "#/components/schemas/Workspace"}
         "400": {$ref: "#/components/responses/Problem"}
         "401": {$ref: "#/components/responses/Problem"}
+  /api/v1/organizations/{workspace_id}/invitations:
+    post:
+      operationId: inviteOrganizationMember
+      tags: [workspaces]
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: workspace_id
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/OrganizationInvitationRequest"}
+      responses:
+        "201":
+          description: Hashed, expiring organization invitation created and delivered.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/OrganizationInvitation"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+  /api/v1/organizations/invitations/accept:
+    post:
+      operationId: acceptOrganizationInvitation
+      tags: [workspaces]
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/OrganizationInvitationAcceptRequest"}
+      responses:
+        "200":
+          description: Invitation consumed once and catalog-backed membership created.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Workspace"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "401": {$ref: "#/components/responses/Problem"}
+  /api/v1/organizations/{workspace_id}/members:
+    get:
+      operationId: listOrganizationMembers
+      tags: [workspaces]
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: workspace_id
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "200":
+          description: Masked organization member directory for authorized administrators.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MembersResponse"}
+        "403": {$ref: "#/components/responses/Problem"}
+  /api/v1/organizations/{workspace_id}/members/{member_user_id}/roles:
+    put:
+      operationId: replaceOrganizationMemberRole
+      tags: [workspaces]
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: workspace_id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: path
+          name: member_user_id
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/MemberRoleRequest"}
+      responses:
+        "200":
+          description: Existing roles replaced with one approved catalog role.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Member"}
+        "403": {$ref: "#/components/responses/Problem"}
+        "409": {$ref: "#/components/responses/Problem"}
+  /api/v1/organizations/{workspace_id}/members/{member_user_id}:
+    delete:
+      operationId: offboardOrganizationMember
+      tags: [workspaces]
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: workspace_id
+          required: true
+          schema: {type: string, format: uuid}
+        - in: path
+          name: member_user_id
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        "204": {description: Membership and organization-scoped access revoked immediately.}
+        "403": {$ref: "#/components/responses/Problem"}
+        "409": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/workspace/switch:
+    post:
+      operationId: switchWorkspaceContext
+      tags: [workspaces]
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/WorkspaceSwitchRequest"}
+      responses:
+        "200":
+          description: New short-lived token scoped to a verified personal or organization workspace.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspaceTokenResponse"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
   /api/v1/referrals:
     post:
       operationId: createPersonalReferral
@@ -620,6 +742,72 @@ components:
         workspaces:
           type: array
           items: {$ref: "#/components/schemas/Workspace"}
+    OrganizationInvitationRequest:
+      type: object
+      additionalProperties: false
+      required: [email, role]
+      properties:
+        email: {type: string, format: email, maxLength: 320}
+        role: {type: string, enum: [MEMBER, VIEWER]}
+    OrganizationInvitationAcceptRequest:
+      type: object
+      additionalProperties: false
+      required: [invitation_token]
+      properties:
+        invitation_token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+    OrganizationInvitation:
+      type: object
+      additionalProperties: false
+      required: [invitation_id, workspace_id, invitee_hint, role, state, created_at, expires_at]
+      properties:
+        invitation_id: {type: string, format: uuid}
+        workspace_id: {type: string, format: uuid}
+        invitee_hint: {type: string}
+        role: {type: string, enum: [MEMBER, VIEWER]}
+        state: {type: string, enum: [pending, accepted, expired, revoked]}
+        created_at: {type: string, format: date-time}
+        expires_at: {type: string, format: date-time}
+    MemberRoleRequest:
+      type: object
+      additionalProperties: false
+      required: [role]
+      properties:
+        role: {type: string, enum: [OWNER, MEMBER, VIEWER]}
+    Member:
+      type: object
+      additionalProperties: false
+      required: [user_id, display_name, roles]
+      properties:
+        user_id: {type: string, format: uuid}
+        email_hint: {type: [string, "null"]}
+        display_name: {type: string}
+        roles:
+          type: array
+          items: {type: string, enum: [OWNER, MEMBER, VIEWER]}
+          uniqueItems: true
+    MembersResponse:
+      type: object
+      additionalProperties: false
+      required: [members]
+      properties:
+        members:
+          type: array
+          items: {$ref: "#/components/schemas/Member"}
+    WorkspaceSwitchRequest:
+      type: object
+      additionalProperties: false
+      required: [workspace_id]
+      properties:
+        workspace_id: {type: string, format: uuid}
+    WorkspaceTokenResponse:
+      type: object
+      additionalProperties: false
+      required: [token_type, access_token, access_expires_at, workspace]
+      properties:
+        token_type: {type: string, enum: [Bearer]}
+        access_token: {type: string, writeOnly: true}
+        access_expires_at: {type: string, format: date-time}
+        workspace: {$ref: "#/components/schemas/Workspace"}
     CreateReferralRequest:
       type: object
       additionalProperties: false

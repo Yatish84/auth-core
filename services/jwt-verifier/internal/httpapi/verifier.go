@@ -22,13 +22,16 @@ import (
 var ErrTokenInvalid = errors.New("token invalid")
 
 type VerifiedClaims struct {
-	UserID     string   `json:"user_id"`
-	SessionID  string   `json:"session_id"`
-	FamilyID   string   `json:"family_id"`
-	JTI        string   `json:"jti"`
-	ClientType string   `json:"client_type"`
-	Assurance  []string `json:"assurance"`
-	IssuedAt   time.Time
+	UserID        string   `json:"user_id"`
+	SessionID     string   `json:"session_id"`
+	FamilyID      string   `json:"family_id"`
+	JTI           string   `json:"jti"`
+	ClientType    string   `json:"client_type"`
+	Assurance     []string `json:"assurance"`
+	WorkspaceID   string   `json:"workspace_id,omitempty"`
+	WorkspaceType string   `json:"workspace_type,omitempty"`
+	Roles         []string `json:"roles,omitempty"`
+	IssuedAt      time.Time
 }
 
 type Verifier interface {
@@ -191,6 +194,9 @@ func (verifier *JWTVerifier) checkRevocation(
 		verifier.redisKey("auth:revocation:family", claims.FamilyID),
 		verifier.redisKey("auth:revocation:user", claims.UserID),
 	}
+	if claims.WorkspaceID != "" && claims.WorkspaceType == "organization" {
+		keys = append(keys, verifier.organizationRedisKey(claims.UserID, claims.WorkspaceID))
+	}
 	values, err := verifier.redis.MGet(ctx, keys...).Result()
 	if err != nil {
 		return err
@@ -207,13 +213,32 @@ func (verifier *JWTVerifier) checkRevocation(
 			return ErrTokenInvalid
 		}
 	}
+	if len(values) == 4 {
+		if value, ok := values[3].(string); ok {
+			var revokedAt int64
+			if _, err := fmt.Sscan(value, &revokedAt); err != nil {
+				return ErrTokenInvalid
+			}
+			if claims.IssuedAt.Unix() <= revokedAt {
+				return ErrTokenInvalid
+			}
+		}
+	}
 	return nil
 }
 
 func (verifier *JWTVerifier) redisKey(prefix string, value string) string {
+	return prefix + ":" + verifier.opaque(value)
+}
+
+func (verifier *JWTVerifier) organizationRedisKey(userID string, workspaceID string) string {
+	return "auth:revocation:org:" + verifier.opaque(userID) + ":" + verifier.opaque(workspaceID)
+}
+
+func (verifier *JWTVerifier) opaque(value string) string {
 	digest := hmac.New(sha256.New, verifier.hmacSecret)
 	_, _ = digest.Write([]byte(value))
-	return prefix + ":" + fmt.Sprintf("%x", digest.Sum(nil))[:32]
+	return fmt.Sprintf("%x", digest.Sum(nil))[:32]
 }
 
 func verifiedClaims(claims jwt.MapClaims) (VerifiedClaims, error) {
@@ -234,11 +259,25 @@ func verifiedClaims(claims jwt.MapClaims) (VerifiedClaims, error) {
 			}
 		}
 	}
+	workspaceID, _ := claims["wid"].(string)
+	workspaceType, _ := claims["wtype"].(string)
+	roles := make([]string, 0)
+	if values, ok := claims["roles"].([]any); ok {
+		for _, value := range values {
+			if text, ok := value.(string); ok {
+				roles = append(roles, text)
+			}
+		}
+	}
+	if (workspaceID == "") != (workspaceType == "") {
+		return VerifiedClaims{}, ErrTokenInvalid
+	}
 	if strings.TrimSpace(userID) == "" || strings.TrimSpace(sessionID) == "" {
 		return VerifiedClaims{}, ErrTokenInvalid
 	}
 	return VerifiedClaims{
 		UserID: userID, SessionID: sessionID, FamilyID: familyID, JTI: jti,
-		ClientType: clientType, Assurance: assurance, IssuedAt: issuedAt.Time,
+		ClientType: clientType, Assurance: assurance, WorkspaceID: workspaceID,
+		WorkspaceType: workspaceType, Roles: roles, IssuedAt: issuedAt.Time,
 	}, nil
 }
