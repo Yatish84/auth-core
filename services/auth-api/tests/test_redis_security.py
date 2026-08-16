@@ -35,3 +35,23 @@ async def test_otp_hash_is_expiring(integration_redis: Redis) -> None:
     stored_hash = await integration_redis.hget(key.name, "hash")
     assert 0 < ttl <= OTP_TTL_SECONDS
     assert stored_hash == "synthetic-otp-hash"
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_otp_verification_is_atomic_and_single_use(integration_redis: Redis) -> None:
+    store = RedisSecurityStore(
+        integration_redis, SecurityKeyFactory(b"test-key-material-for-redis")
+    )
+    user_id = uuid4()
+    await store.store_otp_hash(user_id, "phone_verify", "candidate-hash")
+
+    first = await store.verify_and_consume_otp(
+        user_id, "phone_verify", "candidate-hash", 3
+    )
+    replay = await store.verify_and_consume_otp(
+        user_id, "phone_verify", "candidate-hash", 3
+    )
+
+    assert first == 1
+    assert replay == -1

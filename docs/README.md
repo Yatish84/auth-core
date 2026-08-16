@@ -29,6 +29,7 @@ No document in this review set represents a production certification. Security, 
 
 - [Project Overview](./product/project_overview.md) - Plain-language purpose, users, outcomes, and boundaries.
 - [Screen and Experience Inventory](./product/screen_inventory.md) - Existing wireframes, missing experiences, and approval rules.
+- [Registration UI Recommendations](./product/registration_ui_recommendations.md) - Proposed signup and verification usability improvements awaiting visual approval.
 - [Glossary](./product/glossary.md) - Plain-language definitions of security and platform terms.
 
 ### Requirements and Contracts
@@ -45,6 +46,7 @@ No document in this review set represents a production certification. Security, 
 - [System Architecture](./architecture/system_architecture.md) - Context, containers, EBC components, and dependency rules.
 - [Data Architecture](./architecture/data_architecture.md) - PostgreSQL, Redis, audit, encryption, and ERD.
 - [Delivered Persistence Foundation](./architecture/persistence_foundation.md) - Plain-language map of the implemented tables, controls, and test evidence.
+- [Delivered Registration Foundation](./architecture/registration_foundation.md) - Plain-language registration, verification, provider, and test behavior.
 - [Security Architecture](./architecture/security_architecture.md) - Threat boundaries, controls, token security, and governance.
 - [Client Reuse Strategy](./architecture/client_reuse_strategy.md) - Web-first delivery with future Expo mobile reuse.
 - [Deployment Architecture](./architecture/deployment_architecture.md) - Local, free staging, and AWS production designs.

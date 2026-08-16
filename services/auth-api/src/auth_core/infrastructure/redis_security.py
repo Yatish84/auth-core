@@ -22,6 +22,22 @@ end
 return current
 """
 
+VERIFY_OTP_SCRIPT = """
+local stored = redis.call('HGET', KEYS[1], 'hash')
+if not stored then
+  return -1
+end
+if stored == ARGV[1] then
+  redis.call('DEL', KEYS[1])
+  return 1
+end
+local attempts = redis.call('HINCRBY', KEYS[1], 'attempts', 1)
+if attempts >= tonumber(ARGV[2]) then
+  redis.call('DEL', KEYS[1])
+end
+return 0
+"""
+
 
 @dataclass(frozen=True, slots=True)
 class RedisKey:
@@ -97,6 +113,27 @@ class RedisSecurityStore:
     async def record_otp_failure(self, user_id: UUID, purpose: str) -> int:
         key = self._keys.otp(user_id, purpose)
         result = await cast(Awaitable[Any], self._client.hincrby(key.name, "attempts", 1))
+        return int(result)
+
+    async def get_otp_hash(self, user_id: UUID, purpose: str) -> str | None:
+        key = self._keys.otp(user_id, purpose)
+        result = await cast(Awaitable[Any], self._client.hget(key.name, "hash"))
+        return str(result) if result is not None else None
+
+    async def consume_otp(self, user_id: UUID, purpose: str) -> None:
+        key = self._keys.otp(user_id, purpose)
+        await self._client.delete(key.name)
+
+    async def verify_and_consume_otp(
+        self, user_id: UUID, purpose: str, candidate_hash: str, max_attempts: int
+    ) -> int:
+        key = self._keys.otp(user_id, purpose)
+        result = await cast(
+            Awaitable[Any],
+            self._client.eval(
+                VERIFY_OTP_SCRIPT, 1, key.name, candidate_hash, str(max_attempts)
+            ),
+        )
         return int(result)
 
     async def increment_rate_limit(self, route: str, subject: str, window_seconds: int) -> int:
