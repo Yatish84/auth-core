@@ -25,7 +25,7 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 4. Login | Allow safe password, phone, and social sign-in. | Complete |
 | 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Complete |
 | 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Complete |
-| 7. Personal and organization workspaces | Add private personal portfolios plus optional organizations, invitations, roles, and member removal. | In progress |
+| 7. Personal and organization workspaces | Add private portfolios, optional organizations, privacy-safe referrals, roles, and member removal. | In progress |
 | 8. Recovery and administration | Add password recovery and controlled support actions. | Not started |
 | 9. Privacy and auditing | Add audit review, data export, and account erasure. | Not started |
 | 10. Web experience | Connect all approved website screens to working services. | Not started |
@@ -36,31 +36,37 @@ This file is the simple, ongoing record of what has been planned, what is being 
 
 ### Goal
 
-Give every user one private workspace for managing their own portfolio, while also allowing them to optionally create or join secure organization workspaces, switch safely between them, and collaborate according to approved roles.
+Give every user one private workspace for managing their own portfolio, allow optional secure organization collaboration, and let users refer friends without sharing portfolio access or private login activity.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Workspace foundation | Define one reusable security model for personal and organization portfolio contexts. | In progress |
-| Personal workspace | Automatically provide exactly one private, owner-only workspace to every user, including existing users. | Not started |
-| Organization creation | Let a user optionally create an organization and atomically become its owner. | Not started |
-| Role catalog | Use the approved canonical organization roles and permissions instead of free-form permissions. | Not started |
+| Workspace foundation | Define one reusable security model for personal and organization portfolio contexts. | Ready for review |
+| Personal workspace | Automatically provide exactly one private, owner-only workspace to every user, including existing users. | Ready for review |
+| Personal referrals | Send expiring referral links and track invited, registered, and verified milestones without exposing login activity. | Ready for review |
+| Future reward boundary | Record attribution now but keep undecided incentives, qualification, and reward calculations outside this milestone. | Ready for review |
+| Organization creation | Let a user optionally create an organization and atomically become its owner. | In progress |
+| Role catalog | Use the approved canonical organization roles and permissions instead of free-form permissions. | In progress |
 | Invitations | Issue hashed, expiring, single-use organization invitations with proposed roles and safe email delivery. | Not started |
 | Invitation acceptance | Verify the invitee, consume the invitation once, and create organization membership safely. | Not started |
-| Workspace listing | Return the user's personal workspace and only the organizations where they have active membership. | Not started |
+| Workspace listing | Return the user's personal workspace and only the organizations where they have active membership. | In progress |
 | Member management | List organization members and replace roles only when the acting member has permission. | Not started |
 | Context switching | Verify ownership or membership and issue a short-lived token scoped to the selected workspace. | Not started |
 | Member offboarding | Revoke organization roles and active organization-scoped access immediately. | Not started |
-| Data isolation | Prevent personal and organization portfolio data from crossing workspace boundaries. | Not started |
-| Tests and documentation | Prove personal privacy plus UC-305, UC-306, UC-308, and UC-506 authorization and replay failures. | Not started |
+| Data isolation | Prevent personal and organization portfolio data from crossing workspace boundaries. | In progress |
+| Tests and documentation | Prove personal privacy plus UC-305, UC-306, UC-308, UC-309, UC-310, and UC-506 authorization and replay failures. | In progress |
 
 ### Completion Checklist
 
-- [ ] Every new and existing user has exactly one private personal workspace.
+- [x] Every new and existing user has exactly one private personal workspace.
 - [ ] Personal workspaces cannot accept invitations, additional members, or organization roles.
 - [ ] A user's personal workspace cannot be transferred, removed, or entered by another user.
-- [ ] Organization creation and owner membership occur in one database transaction.
+- [x] Referral tokens are random, hashed at rest, expiring, rate-limited, and never grant workspace access.
+- [x] A referrer sees only masked invited, registered, verified, expired, or revoked status—not login or portfolio activity.
+- [x] Self-referrals and referrals for existing accounts are denied safely.
+- [x] Reward qualification and benefits remain disabled until a separate business plan is approved.
+- [x] Organization creation and owner membership occur in one database transaction.
 - [ ] Invitation tokens are random, hashed at rest, expiring, and single-use.
 - [ ] Invite acceptance cannot grant roles outside the approved catalog.
 - [ ] Users can list and enter only their personal workspace and organizations where they have active membership.
@@ -390,6 +396,14 @@ Create secure signed-in sessions after approved login and MFA workflows, while g
 - Reconciled the organization scope with UC-305, UC-306, UC-308, and UC-506.
 - Project owner clarified that GroX must also serve individuals who manage only their own financial portfolios.
 - Expanded Milestone 7 to provide every user a private personal workspace while keeping organization participation optional.
+- Project owner approved adding personal user referrals as a separate acquisition use case from organization invitations.
+- Added UC-310 referral tracking for invitation, profile-created, and profile-verified status; rewards remain future work.
+- Started the Milestone 7 implementation with personal workspace persistence, referral attribution, registration hooks, and shared web/mobile APIs.
+- Added migration `0008_workspaces_and_referrals`, including automatic existing-user backfill and canonical owner/member/viewer permissions.
+- Added `GET /workspaces`, `POST /organizations`, `POST /referrals`, and `GET /referrals` without changing any frontend screen.
+- Connected email registration and verification to referral registration and verification milestones.
+- Expanded the shared OpenAPI contract to 37 paths and documented UC-309 and UC-310 across the SRS, schema, methods, diagrams, roadmap, and traceability matrix.
+- Passed 51 fast Python tests, 20 real PostgreSQL/Redis tests, web tests and production build, Python lint/type checks, Go tests/vet, documentation validation, Compose validation, OpenAPI parsing, migration downgrade/upgrade, and zero schema drift.
 
 ## Decisions
 
@@ -400,6 +414,8 @@ Create secure signed-in sessions after approved login and MFA workflows, while g
 | Keep the future mobile application visible in the structure but do not design unapproved screens. | Protects future reuse without creating unauthorized UI work. |
 | Keep session rules shared while delivering refresh tokens differently to web and mobile clients. | Browsers require protected cookies, while mobile apps require operating-system secure storage. |
 | Give every user one private personal workspace and make organizations optional. | Individuals can manage their own portfolios without joining a business, while the same account can later access organization portfolios. |
+| Keep personal referrals separate from organization invitations. | Referrals grow the user base but never grant access to another person's or company's portfolio. |
+| Track referral attribution now and defer rewards. | The business can measure acquisition while incentive rules, fraud controls, and benefits remain unapproved. |
 | Track progress in this file. | Gives non-technical and technical stakeholders one clear status record. |
 
 ## Current Blockers or Owner Actions

@@ -31,6 +31,8 @@ These are documentation requirements, not approved designs.
 | Social identity collision and linking proof | UC-307 | Unsafe auto-linking must be replaced by explicit proof. | Design permission required |
 | Active sessions and devices | UC-509 | Users must inspect and revoke sessions. | Design permission required |
 | Organization creation, invitation, switcher, members | UC-305, UC-306, UC-308 | Multi-tenant workflows require management interfaces. | Design permission required |
+| Personal workspace switcher | UC-309 | Individuals need a clear private portfolio context without being forced into an organization. | Design permission required |
+| Refer-a-friend and referral status | UC-310 | Referrers need masked invited/registered/verified progress without viewing login activity. | Design permission required |
 | Role editor | UC-506 | Organization admins need safe catalog-based assignment. | Design permission required |
 | Contact-change dual verification | UC-510 | Both old and new channels need visible status. | Design permission required |
 | Privacy export/erasure request and status | UC-601, UC-602 | High-impact privacy actions require warnings and progress. | Design permission required |

@@ -67,6 +67,7 @@ services:
       WEBAUTHN_ALLOWED_ORIGINS: ${WEBAUTHN_ALLOWED_ORIGINS:-http://localhost:3000}
       LOCAL_CAPTCHA_TOKEN: ${LOCAL_CAPTCHA_TOKEN:-local-development-pass}
       VERIFICATION_BASE_URL: ${VERIFICATION_BASE_URL:-http://localhost:3000/verify-email}
+      REFERRAL_BASE_URL: ${REFERRAL_BASE_URL:-http://localhost:3000/signup}
       SMTP_HOST: ${SMTP_HOST:-mailpit}
       SMTP_PORT: ${SMTP_PORT:-1025}
       EMAIL_SENDER: ${EMAIL_SENDER:-no-reply@local.vittavaan.test}
@@ -77,6 +78,7 @@ services:
       SECRET_ENCRYPTION_MODE: ${SECRET_ENCRYPTION_MODE:-local}
       TOKEN_SIGNING_MODE: ${TOKEN_SIGNING_MODE:-local}
       REFRESH_TOKEN_HMAC_SECRET: ${REFRESH_TOKEN_HMAC_SECRET:-local-refresh-token-key-change-me}
+      WORKSPACE_TOKEN_HMAC_SECRET: ${WORKSPACE_TOKEN_HMAC_SECRET:-local-workspace-token-key-change-me}
       JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8000}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-grox-platform}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}

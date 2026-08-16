@@ -30,8 +30,9 @@ class FakeRepository:
         token_hash: str,
         expires_at: datetime,
         correlation_id: UUID,
+        referral_token_hash: str | None,
     ) -> UUID:
-        del given_name, family_name, password_hash, expires_at, correlation_id
+        del given_name, family_name, password_hash, expires_at, correlation_id, referral_token_hash
         user_id = uuid4()
         self.contacts[email] = PendingContact(user_id, "pending")
         self.email_token_hash = token_hash
@@ -165,6 +166,7 @@ def control(
         redis_store=FakeRedis(),  # type: ignore[arg-type]
         verification_base_url="http://localhost:3000/verify-email",
         otp_pepper=b"test-otp-pepper-long-enough",
+        referral_token_pepper=b"test-referral-pepper-long-enough",
     )
     return instance, repository, email, sms
 

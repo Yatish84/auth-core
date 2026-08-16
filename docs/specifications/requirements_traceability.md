@@ -14,6 +14,8 @@ This matrix ensures every source use case receives a boundary, control, persiste
 | UC-305 | Organizations/invitations | `/organizations*` | `OrganizationControl` | orgs, invitations, bindings | Org create/invite/accept | Authorization, expiry, idempotency |
 | UC-306 | Context switching | `/auth/org/switch` | `OrganizationControl` | bindings, sessions | Organization switcher | Membership and scoped claims |
 | UC-308 | Offboarding | member DELETE | `OrganizationControl` | bindings, sessions, org revocation | Member administration | Immediate tenant denial only |
+| UC-309 | Personal workspace | `/workspaces` | `WorkspaceControl` | organizations with personal owner | Workspace switcher | Exactly one owner-only workspace; cross-user denial |
+| UC-310 | Personal referrals | `/referrals`, signup referral token | `ReferralControl`, `RegistrationControl` | referrals | Referral status | Hashing, expiry, attribution, privacy, self-referral denial |
 | UC-401, UC-402, UC-403, UC-404, UC-405 | Token/session lifecycle | refresh/logout/session APIs | `SessionControl`, `TokenRefreshControl` | families, generations, sessions, revocation keys | Session management | Replay theft, cap, idle/absolute expiry |
 | UC-501, UC-502 | Password recovery | `/auth/password/*` | `RecoveryControl` | ephemeral tokens, history | Forgot/reset screens | Anti-enumeration, single use, revoke all |
 | UC-503, UC-504 | Unlock/suspend | `/admin/users/*` | `SupportAdminControl` | users, sessions, audit | Admin user detail | Role/MFA checks and revocation |

@@ -200,14 +200,44 @@ class Organization(TimestampMixin, Base):
     __tablename__ = "organizations"
     __table_args__ = (
         CheckConstraint("state IN ('active', 'suspended', 'closed')", name="state_valid"),
+        CheckConstraint(
+            "(workspace_type = 'personal' AND personal_owner_user_id IS NOT NULL) OR "
+            "(workspace_type = 'organization' AND personal_owner_user_id IS NULL)",
+            name="owner_matches_workspace_type",
+        ),
+        Index(
+            "uq_organizations_personal_owner",
+            "personal_owner_user_id",
+            unique=True,
+            postgresql_where=text("workspace_type = 'personal'"),
+        ),
     )
 
     org_id: Mapped[UUID] = uuid_primary_key()
     name: Mapped[str] = mapped_column(String(180), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    workspace_type: Mapped[str] = mapped_column(
+        String(24), nullable=False, server_default="organization"
+    )
+    personal_owner_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("auth.users.user_id", ondelete="CASCADE"), index=True
+    )
     state: Mapped[str] = mapped_column(String(24), nullable=False, server_default="active")
     subscription_metadata: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, server_default="{}"
+    )
+
+
+def personal_workspace_for(user: User) -> Organization:
+    display_name = " ".join(
+        part for part in (user.given_name, user.family_name) if part
+    ).strip()
+    name = f"{display_name}'s Portfolio" if display_name else "My Personal Portfolio"
+    return Organization(
+        name=name,
+        slug=f"personal-{user.user_id.hex}",
+        workspace_type="personal",
+        personal_owner_user_id=user.user_id,
     )
 
 
@@ -326,6 +356,41 @@ class Invitation(Base):
     )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Referral(Base):
+    __tablename__ = "referrals"
+    __table_args__ = (
+        CheckConstraint(
+            "state IN ('invited', 'registered', 'verified', 'expired', 'revoked')",
+            name="state_valid",
+        ),
+        CheckConstraint("expires_at > created_at", name="expiry_after_creation"),
+        Index("ix_referrals_referrer_created", "referrer_user_id", "created_at"),
+        Index(
+            "uq_referrals_referred_user",
+            "referred_user_id",
+            unique=True,
+            postgresql_where=text("referred_user_id IS NOT NULL"),
+        ),
+    )
+
+    referral_id: Mapped[UUID] = uuid_primary_key()
+    referrer_user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("auth.users.user_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    invitee_email: Mapped[str] = mapped_column(CITEXT(), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    referred_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("auth.users.user_id", ondelete="SET NULL"), index=True
+    )
+    state: Mapped[str] = mapped_column(String(24), nullable=False, server_default="invited")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    registered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class RolePermissionCatalog(TimestampMixin, Base):

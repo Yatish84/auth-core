@@ -443,6 +443,66 @@ paths:
         "204": {description: Selected owned session revoked.}
         "401": {$ref: "#/components/responses/Problem"}
         "404": {$ref: "#/components/responses/Problem"}
+  /api/v1/workspaces:
+    get:
+      operationId: listWorkspaces
+      tags: [workspaces]
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Private personal workspace and authorized organization workspaces.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkspacesResponse"}
+        "401": {$ref: "#/components/responses/Problem"}
+  /api/v1/organizations:
+    post:
+      operationId: createOrganization
+      tags: [workspaces]
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateOrganizationRequest"}
+      responses:
+        "201":
+          description: Organization workspace created with the caller as owner.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Workspace"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "401": {$ref: "#/components/responses/Problem"}
+  /api/v1/referrals:
+    post:
+      operationId: createPersonalReferral
+      tags: [referrals]
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/CreateReferralRequest"}
+      responses:
+        "201":
+          description: Privacy-safe referral created and delivered.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Referral"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "409": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+    get:
+      operationId: listPersonalReferrals
+      tags: [referrals]
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Caller-owned referral milestones with masked invitee details.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ReferralsResponse"}
+        "401": {$ref: "#/components/responses/Problem"}
   /.well-known/jwks.json:
     get:
       operationId: getSigningKeys
@@ -532,6 +592,60 @@ components:
         given_name: {type: string, minLength: 1, maxLength: 120}
         family_name: {type: string, minLength: 1, maxLength: 120}
         captcha_token: {type: string, minLength: 1, maxLength: 2048, writeOnly: true}
+        referral_token: {type: [string, "null"], minLength: 20, maxLength: 512, writeOnly: true}
+    CreateOrganizationRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: {type: string, minLength: 2, maxLength: 180}
+    Workspace:
+      type: object
+      additionalProperties: false
+      required: [workspace_id, name, slug, workspace_type, roles]
+      properties:
+        workspace_id: {type: string, format: uuid}
+        name: {type: string}
+        slug: {type: string}
+        workspace_type: {type: string, enum: [personal, organization]}
+        roles:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+    WorkspacesResponse:
+      type: object
+      additionalProperties: false
+      required: [workspaces]
+      properties:
+        workspaces:
+          type: array
+          items: {$ref: "#/components/schemas/Workspace"}
+    CreateReferralRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email: {type: string, format: email, maxLength: 320}
+    Referral:
+      type: object
+      additionalProperties: false
+      required: [referral_id, invitee_hint, state, created_at, expires_at]
+      properties:
+        referral_id: {type: string, format: uuid}
+        invitee_hint: {type: string}
+        state: {type: string, enum: [invited, registered, verified, expired, revoked]}
+        created_at: {type: string, format: date-time}
+        expires_at: {type: string, format: date-time}
+        registered_at: {type: [string, "null"], format: date-time}
+        verified_at: {type: [string, "null"], format: date-time}
+    ReferralsResponse:
+      type: object
+      additionalProperties: false
+      required: [referrals]
+      properties:
+        referrals:
+          type: array
+          items: {$ref: "#/components/schemas/Referral"}
     EmailVerificationRequest:
       type: object
       additionalProperties: false

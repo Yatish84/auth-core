@@ -66,6 +66,28 @@ flowchart TD
     SESSIONS --> AUDIT[Append audit and notification event]
 ```
 
+## Personal Workspace and Referral Flow
+
+```mermaid
+flowchart TD
+    USER([Verified user]) --> PERSONAL[Ensure one private personal workspace]
+    PERSONAL --> CHOICE{User action}
+    CHOICE -->|Manage own portfolio| PRIVATE[Enter owner-only personal context]
+    CHOICE -->|Create organization| ORG[Create optional organization and owner role]
+    CHOICE -->|Refer a friend| ELIGIBLE{New eligible person?}
+    ELIGIBLE -->|No: self or existing user| DENY[Safe referral denial]
+    ELIGIBLE -->|Yes| LIMIT{Within daily limit?}
+    LIMIT -->|No| RATE[429 retry later]
+    LIMIT -->|Yes| TOKEN[Store hashed 30-day token and send link]
+    TOKEN --> REGISTER{Friend creates matching profile?}
+    REGISTER -->|No| EXPIRE[Expire without reward or access]
+    REGISTER -->|Yes| CLAIM[Attach attribution and create friend's private workspace]
+    CLAIM --> VERIFY{Profile verified?}
+    VERIFY -->|Yes| STATUS[Show masked verified status to referrer]
+    VERIFY -->|Not yet| PENDING[Show masked registered status]
+    STATUS --> FUTURE[Future reward program boundary]
+```
+
 ## Four-Eyes MFA Reset
 
 ```mermaid

@@ -13,6 +13,7 @@ from auth_core.boundary.http.mfa import router as mfa_router
 from auth_core.boundary.http.registration import router as registration_router
 from auth_core.boundary.http.session import jwks_router
 from auth_core.boundary.http.session import router as session_router
+from auth_core.boundary.http.workspace import router as workspace_router
 from auth_core.config import get_settings
 from auth_core.infrastructure.database import close_database
 from auth_core.infrastructure.redis_store import close_redis
@@ -53,6 +54,7 @@ app.include_router(login_router)
 app.include_router(mfa_router)
 app.include_router(session_router)
 app.include_router(jwks_router)
+app.include_router(workspace_router)
 
 
 @app.middleware("http")
@@ -60,7 +62,7 @@ async def prevent_auth_response_storage(
     request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> Response:
     response = await call_next(request)
-    if request.url.path.startswith("/api/v1/auth"):
+    if request.url.path.startswith("/api/v1"):
         response.headers["Cache-Control"] = "no-store"
     return response
 

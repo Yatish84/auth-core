@@ -419,3 +419,53 @@ sequenceDiagram
     Recovery->>Notify: Send security confirmation
     API-->>Client: Updated contact details
 ```
+
+### Sequence Diagram 13: Personal Workspace Provisioning (`UC-309`)
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Client as Web/Mobile Client
+    participant API as WorkspaceRouter
+    participant Control as WorkspaceControl
+    participant DB as PostgreSQL
+
+    User->>Client: Complete profile registration
+    Client->>API: GET /api/v1/workspaces
+    API->>Control: listWorkspaces(authenticatedUser)
+    Control->>DB: Ensure exactly one personal workspace
+    DB-->>Control: Personal workspace plus active organizations
+    Control-->>API: Authorized workspace summaries
+    API-->>Client: Private personal portfolio and optional organizations
+    Note over Control,DB: Personal workspace cannot accept members, roles, or invitations
+```
+
+### Sequence Diagram 14: Personal Referral Attribution (`UC-310`)
+
+```mermaid
+sequenceDiagram
+    actor Referrer
+    actor Friend
+    participant Client as Web/Mobile Client
+    participant API as WorkspaceRouter
+    participant Referral as ReferralControl
+    participant DB as PostgreSQL
+    participant Notify as Email Provider
+    participant Registration as RegistrationControl
+
+    Referrer->>Client: Enter friend's email
+    Client->>API: POST /api/v1/referrals
+    API->>Referral: invite(referrer, email)
+    Referral->>Referral: Deny self/existing user and enforce daily limit
+    Referral->>DB: Store only hashed expiring token
+    Referral->>Notify: Send opaque referral link
+    API-->>Client: Masked invited status
+    Friend->>Registration: Register with referral token
+    Registration->>DB: Create independent user and private workspace
+    Registration->>DB: Atomically claim matching referral
+    Friend->>Registration: Verify profile email
+    Registration->>DB: Mark referral verified
+    Referrer->>API: GET /api/v1/referrals
+    API-->>Referrer: Masked milestone status only
+    Note over API,DB: No login time, session state, profile detail, or portfolio access is shared
+```

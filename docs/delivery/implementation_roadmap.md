@@ -15,7 +15,7 @@ Work proceeds through reviewable milestones. Each milestone must satisfy its doc
 | 4. Primary authentication | Password, phone OTP, social OIDC, fallback, risk evaluation | UC-101 to UC-106 and UC-303/307 tests |
 | 5. MFA and passkeys | TOTP, backup OTP, passkeys, enrollment, step-up | UC-201 to UC-204 tests |
 | 6. Sessions and tokens | JWT/JWKS, refresh rotation, reuse detection, logout, timeouts, Go verifier | UC-401 to UC-405 tests and Python/Go interoperability |
-| 7. Organizations and RBAC | Organizations, invitations, roles, switching, offboarding | UC-305, UC-306, UC-308, UC-506 tests |
+| 7. Personal and organization workspaces | Private personal portfolios, optional organizations, referrals, invitations, roles, switching, offboarding | UC-305, UC-306, UC-308 to UC-310, UC-506 tests |
 | 8. Recovery and governance | Password recovery, lockout, support recovery, suspension, four-eyes reset | UC-501 to UC-510 tests |
 | 9. Privacy and audit | Audit search, GDPR export, anonymization, retention jobs | UC-505, UC-601, UC-602 tests |
 | 10. Web experience | Approved wireframes implemented and connected to APIs | Browser E2E, accessibility, and responsive review |

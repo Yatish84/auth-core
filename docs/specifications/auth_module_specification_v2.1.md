@@ -127,6 +127,8 @@ This catalog outlines all functional paths supported by the `auth-core` engine a
 * **UC-306: Organization Context Switch:** Authenticated user with multiple `UserRoleBinding` records swaps active enterprise tenant scope without re-authenticating, issuing a new scoped JWT.
 * **UC-307: Identity Link / Unlink & SSO Collision Resolution:** User links social provider or resolves collision between social SSO email and existing local account. Explicit rule: If an SSO email matches an existing local account, auto-linking is blocked until the user proves ownership by re-authenticating with their existing primary password/MFA credential. Prevents factor unlinking if only one factor remains.
 * **UC-308: Organization Member Offboarding:** Organization Admin removes a member; system immediately revokes all assigned `UserRoleBinding` instances for that tenant and revokes all active tenant-scoped session tokens.
+* **UC-309: Personal Workspace Provisioning:** Every user receives exactly one private personal portfolio workspace. It cannot accept members, invitations, or organization roles, and only its owner may enter it.
+* **UC-310: Personal Referral Tracking:** Authenticated user sends an expiring referral link to a prospective user. The engine records invitation, profile-created, and profile-verified milestones without exposing the referred person's login activity or portfolio. Referral attribution never grants workspace access; rewards remain a separate future business capability.
 
 ### 4.4 Session Management & Token Lifecycle
 * **UC-401: Dual-Client Token Issue:** Issues short-lived Access JWT (15-min max lifetime) and long-lived Refresh Token bound to a `RefreshTokenFamily`. Enforces a maximum concurrent session cap (max 10 active families per user); oldest active session family is automatically revoked upon overflow.
@@ -265,13 +267,16 @@ Ephemeral tokens for asynchronous account workflows.
 * **Methods:**
   * `validateAndConsume(inputToken: String): Boolean`
 
-#### 5.1.7 Object: `Organization` & `Invitation`
-Multi-tenant business structures (*BusinessLedger*).
+#### 5.1.7 Object: `Workspace`, `Organization`, `Invitation` & `Referral`
+Private personal portfolio and optional multi-tenant business structures (*BusinessLedger*).
 * **Properties:**
+  * `workspaceID: UUID`, `workspaceType: Enum(PERSONAL, ORGANIZATION)`, `personalOwnerUserID: UUID?`
   * `orgID: UUID`, `orgName: String`, `taxIdentifier: String`, `subscriptionTier: String`
   * `invitationID: UUID`, `inviteEmail: String`, `role: String`, `invitationTokenHash: String`, `isAccepted: Boolean`
+  * `referralID: UUID`, `referrerUserID: UUID`, `inviteEmail: String`, `referralTokenHash: String`, `state: Enum`
 * **Methods:**
-  * `createOrganization()`, `issueInvitation()`, `acceptInvitation()`
+  * `ensurePersonalWorkspace()`, `createOrganization()`, `issueInvitation()`, `acceptInvitation()`
+  * `issueReferral()`, `claimReferralOnRegistration()`, `markReferralVerified()`
 
 #### 5.1.8 Object: `TrustedDevice`
 Tracks historical browser and hardware signatures for risk scoring.

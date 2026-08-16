@@ -80,6 +80,7 @@ async def test_real_password_login_and_oidc_collision_are_safely_persisted(
         redis_store=store,
         verification_base_url="http://localhost:3000/verify-email",
         otp_pepper=b"integration-login-otp-key",
+        referral_token_pepper=b"integration-referral-key",
     )
     login = LoginControl(
         repository=SqlAlchemyLoginRepository(sessions),

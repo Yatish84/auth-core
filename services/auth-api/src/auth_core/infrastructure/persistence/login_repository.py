@@ -14,6 +14,7 @@ from auth_core.infrastructure.persistence.models import (
     MFADevice,
     TrustedDevice,
     User,
+    personal_workspace_for,
 )
 
 
@@ -54,6 +55,7 @@ class SqlAlchemyLoginRepository:
                 )
                 session.add(user)
                 await session.flush()
+                session.add(personal_workspace_for(user))
                 session.add_all(
                     [
                         Identity(

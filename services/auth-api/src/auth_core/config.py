@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     cors_allowed_origins: str = "http://localhost:3000"
     local_captcha_token: str = "local-development-pass"
     verification_base_url: str = "http://localhost:3000/verify-email"
+    referral_base_url: str = "http://localhost:3000/signup"
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     email_sender: str = "no-reply@local.vittavaan.test"
@@ -39,6 +40,7 @@ class Settings(BaseSettings):
     secret_encryption_mode: str = "local"
     token_signing_mode: str = "local"
     refresh_token_hmac_secret: str = "local-refresh-token-key-change-me"
+    workspace_token_hmac_secret: str = "local-workspace-token-key-change-me"
     jwt_issuer: str = "http://localhost:8000"
     jwt_audience: str = "grox-platform"
 

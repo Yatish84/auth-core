@@ -126,6 +126,17 @@ This human-readable contract defines the intended API surface. During implementa
 | PUT | `/organizations/{org_id}/members/{user_id}/roles` | UC-506 | Replace validated role assignments. |
 | DELETE | `/organizations/{org_id}/members/{user_id}` | UC-308 | Offboard member and revoke tenant access. |
 
+### Personal Workspaces and Referrals
+
+| Method | Path | Use case | Result |
+|---|---|---|---|
+| GET | `/workspaces` | UC-309 | List the caller's private personal workspace and active organization workspaces. |
+| POST | `/referrals` | UC-310 | Send a rate-limited, expiring referral that grants no portfolio access. |
+| GET | `/referrals` | UC-310 | Return only the caller's masked referral statuses: invited, registered, verified, expired, or revoked. |
+| POST | `/auth/signup` with optional `referral_token` | UC-301, UC-310 | Create an independent account and claim valid matching referral attribution. |
+
+Referral status deliberately excludes last-login time, session state, profile details, and portfolio information. Rewards and eligibility calculations are outside the current contract until the business program is approved.
+
 ### Privacy
 
 | Method | Path | Use case | Result |

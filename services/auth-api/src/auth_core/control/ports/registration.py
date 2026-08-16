@@ -39,6 +39,7 @@ class RegistrationRepository(Protocol):
         token_hash: str,
         expires_at: datetime,
         correlation_id: UUID,
+        referral_token_hash: str | None,
     ) -> UUID: ...
 
     async def issue_email_verification(
@@ -60,4 +61,3 @@ class RegistrationRepository(Protocol):
     ) -> UUID: ...
 
     async def verify_phone(self, user_id: UUID, correlation_id: UUID) -> bool: ...
-

@@ -15,7 +15,7 @@ The first deliverable will be a responsive web MVP that stakeholders and control
 - Email/password, phone OTP, social OIDC, and passkey authentication.
 - Adaptive risk checks and mandatory multi-factor authentication.
 - Secure access JWTs, refresh-token rotation, replay detection, and session management.
-- Organization invitations, context switching, roles, and offboarding.
+- Private personal portfolio workspaces, optional organizations, privacy-safe referrals, roles, context switching, and offboarding.
 - Password/contact recovery and governed support actions.
 - Four-eyes delayed MFA reset for sensitive administrative recovery.
 - Immutable security audit history and GDPR export/erasure workflows.

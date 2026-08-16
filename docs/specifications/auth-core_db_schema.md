@@ -27,8 +27,9 @@ This document defines the target schema semantics. Alembic migrations, not manua
 | `auth.sessions` | session/family/user/org, access JTI, client, device, IP, activity, expiry, revoked time |
 | `auth.ephemeral_tokens` | token hash, user, type, expiry, consumed time, metadata |
 | `auth.trusted_devices` | user/fingerprint, trust state, last IP, first/last seen, bounded risk metadata |
-| `auth.organizations` | org name, lifecycle, subscription metadata, timestamps |
+| `auth.organizations` | workspace type, private owner when personal, org name, lifecycle, subscription metadata, timestamps |
 | `auth.invitations` | org, invitee email, token hash, proposed roles, issuer, expiry, acceptance |
+| `auth.referrals` | referrer, invitee email, token hash, referred user, invitation/registration/verification state and timestamps |
 | `auth.role_permission_catalog` | module, role, permission, version, active state |
 | `auth.user_role_bindings` | user, org, module, role, grantor, active/revoked times |
 | `auth.governed_requests` | type, target, initiator, approver, state, execute-after, ticket, result |
@@ -49,6 +50,8 @@ This document defines the target schema semantics. Alembic migrations, not manua
 8. Audit records reject update/delete through privileges and trigger.
 9. Conditional check constraints enforce credential fields appropriate to MFA type.
 10. Indexes support active-session, unexpired-token, tenant-membership, outbox, and audit cursor queries.
+11. Each non-anonymized user has at most one personal workspace, and personal workspaces require an owner.
+12. Each created account can be attributed to at most one referral; referral tokens are hashed, expiring, and never grant portfolio access.
 
 ## Row-Level Security
 
