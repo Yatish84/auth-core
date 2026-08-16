@@ -25,57 +25,52 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 4. Login | Allow safe password, phone, and social sign-in. | Complete |
 | 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Complete |
 | 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Complete |
-| 7. Personal and organization workspaces | Add private portfolios, optional organizations, privacy-safe referrals, roles, and member removal. | Ready for review |
-| 8. Recovery and administration | Add password recovery and controlled support actions. | Not started |
+| 7. Personal and organization workspaces | Add private portfolios, optional organizations, privacy-safe referrals, roles, and member removal. | Complete |
+| 8. Recovery and administration | Add password recovery and controlled support actions. | In progress |
 | 9. Privacy and auditing | Add audit review, data export, and account erasure. | Not started |
 | 10. Web experience | Connect all approved website screens to working services. | Not started |
 | 11. Public test website | Publish the controlled MVP for stakeholder testing. | Not started |
 | 12. AWS production preparation | Harden and move the system to the final AWS environment. | Not started |
 
-## Current Milestone: 7 - Personal and Organization Workspaces
+## Current Milestone: 8 - Recovery and Controlled Administration
 
 ### Goal
 
-Give every user one private workspace for managing their own portfolio, allow optional secure organization collaboration, and let users refer friends without sharing portfolio access or private login activity.
+Help users safely regain account access while ensuring that powerful support actions require verified staff roles, independent approval, waiting periods, user notification, and complete audit evidence.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Workspace foundation | Define one reusable security model for personal and organization portfolio contexts. | Ready for review |
-| Personal workspace | Automatically provide exactly one private, owner-only workspace to every user, including existing users. | Ready for review |
-| Personal referrals | Send expiring referral links and track invited, registered, and verified milestones without exposing login activity. | Ready for review |
-| Future reward boundary | Record attribution now but keep undecided incentives, qualification, and reward calculations outside this milestone. | Ready for review |
-| Organization creation | Let a user optionally create an organization and atomically become its owner. | Ready for review |
-| Role catalog | Use the approved canonical organization roles and permissions instead of free-form permissions. | Ready for review |
-| Invitations | Issue hashed, expiring, single-use organization invitations with proposed roles and safe email delivery. | Ready for review |
-| Invitation acceptance | Verify the invitee, consume the invitation once, and create organization membership safely. | Ready for review |
-| Workspace listing | Return the user's personal workspace and only the organizations where they have active membership. | Ready for review |
-| Member management | List organization members and replace roles only when the acting member has permission. | Ready for review |
-| Context switching | Verify ownership or membership and issue a short-lived token scoped to the selected workspace. | Ready for review |
-| Member offboarding | Revoke organization roles and active organization-scoped access immediately. | Ready for review |
-| Data isolation | Prevent personal and organization portfolio data from crossing workspace boundaries. | Ready for review |
-| Tests and documentation | Prove personal privacy plus UC-305, UC-306, UC-308, UC-309, UC-310, and UC-506 authorization and replay failures. | Ready for review |
+| Recovery foundation | Define reusable recovery workflows, safe public responses, expiration, replay protection, and audit evidence. | In progress |
+| Password-reset request | Send a secure single-use reset link without revealing whether an email belongs to an account. | Not started |
+| Password-reset execution | Verify the reset link, password policy, breach status, and password history before changing the password. | Not started |
+| Session response | Revoke active sessions and refresh-token families after a successful password or sensitive contact change. | Not started |
+| Account unlock | Allow an automatic or authorized support process to release a temporary login lock safely. | Not started |
+| Account suspension | Let an authorized administrator suspend an account and immediately revoke all active access. | Not started |
+| Support-assisted recovery | Require a support ticket and verified identity evidence before issuing a single-use recovery link. | Not started |
+| Governed MFA reset | Require separate L2 initiation and L3 approval, then wait 12 hours and notify the user before execution. | Not started |
+| Contact change | Verify both the old and new email or phone channel before changing a primary contact. | Not started |
+| Staff authorization | Enforce approved support and security roles without trusting user-supplied role claims. | Not started |
+| Tests and documentation | Prove UC-501 to UC-504, UC-507, UC-508, and UC-510 success, abuse, replay, role, and delay paths. | Not started |
+| UI boundary | Document proposed recovery and administration screens without creating or changing frontend visuals until approved. | Not started |
 
 ### Completion Checklist
 
-- [x] Every new and existing user has exactly one private personal workspace.
-- [x] Personal workspaces cannot accept invitations, additional members, or organization roles.
-- [x] A user's personal workspace cannot be transferred, removed, or entered by another user.
-- [x] Referral tokens are random, hashed at rest, expiring, rate-limited, and never grant workspace access.
-- [x] A referrer sees only masked invited, registered, verified, expired, or revoked status—not login or portfolio activity.
-- [x] Self-referrals and referrals for existing accounts are denied safely.
-- [x] Reward qualification and benefits remain disabled until a separate business plan is approved.
-- [x] Organization creation and owner membership occur in one database transaction.
-- [x] Invitation tokens are random, hashed at rest, expiring, and single-use.
-- [x] Invite acceptance cannot grant roles outside the approved catalog.
-- [x] Users can list and enter only their personal workspace and organizations where they have active membership.
-- [x] Scoped tokens identify the selected workspace, its type, and any verified organization roles.
-- [x] Unauthorized role changes, member reads, and removals are denied safely.
-- [x] Removing a member revokes bindings and active tenant access immediately.
-- [x] A last owner cannot be removed or demoted without a safe ownership transfer.
-- [x] PostgreSQL tests prove personal, cross-user, and cross-organization data isolation.
-- [x] Documentation and proposed workspace-management needs were reviewed by the project owner; no frontend screens were created or changed.
+- [ ] Password-reset requests return the same safe response for known and unknown accounts.
+- [ ] Reset and recovery tokens are random, hashed at rest, expiring, rate-limited, and single-use.
+- [ ] New passwords pass policy, breach, and password-history checks before storage with Argon2id.
+- [ ] Successful password reset revokes existing sessions and sends a security notification.
+- [ ] Unlock and suspension actions require an authenticated, authorized staff role and a ticket reference.
+- [ ] Account suspension immediately blocks login and revokes all active access.
+- [ ] Support-assisted recovery records verified evidence without storing unnecessary sensitive documents.
+- [ ] The person approving an MFA reset is different from the person requesting it.
+- [ ] MFA reset execution cannot occur before the approved 12-hour delay.
+- [ ] The user is warned through original verified channels before a governed MFA reset executes.
+- [ ] Primary contact changes require proof through both the old and new channel.
+- [ ] Replay, expired, wrong-role, self-approval, early-execution, and changed-state paths are rejected safely.
+- [ ] Recovery behavior is reusable by the web client and future mobile app through the same API contracts.
+- [ ] Documentation and any proposed recovery/admin screens are reviewed by the project owner before UI implementation.
 
 ## Completed Milestone Archive
 
@@ -277,6 +272,51 @@ Create secure signed-in sessions after approved login and MFA workflows, while g
 - [x] The Go verifier rejects invalid, expired, incorrectly scoped, or revoked access tokens.
 - [x] Documentation and proposed session-management screens were reviewed and approved by the project owner.
 
+### Milestone 7 - Personal and Organization Workspaces
+
+#### Goal
+
+Give every user one private workspace for managing their own portfolio, allow optional secure organization collaboration, and let users refer friends without sharing portfolio access or private login activity.
+
+#### Work Items
+
+| Work item | Simple description | Final status |
+|---|---|---|
+| Workspace foundation | Define one reusable security model for personal and organization portfolio contexts. | Complete |
+| Personal workspace | Automatically provide exactly one private, owner-only workspace to every user, including existing users. | Complete |
+| Personal referrals | Send expiring referral links and track invited, registered, and verified milestones without exposing login activity. | Complete |
+| Future reward boundary | Record attribution now but keep undecided incentives, qualification, and reward calculations outside this milestone. | Complete |
+| Organization creation | Let a user optionally create an organization and atomically become its owner. | Complete |
+| Role catalog | Use the approved canonical organization roles and permissions instead of free-form permissions. | Complete |
+| Invitations | Issue hashed, expiring, single-use organization invitations with proposed roles and safe email delivery. | Complete |
+| Invitation acceptance | Verify the invitee, consume the invitation once, and create organization membership safely. | Complete |
+| Workspace listing | Return the user's personal workspace and only the organizations where they have active membership. | Complete |
+| Member management | List organization members and replace roles only when the acting member has permission. | Complete |
+| Context switching | Verify ownership or membership and issue a short-lived token scoped to the selected workspace. | Complete |
+| Member offboarding | Revoke organization roles and active organization-scoped access immediately. | Complete |
+| Data isolation | Prevent personal and organization portfolio data from crossing workspace boundaries. | Complete |
+| Tests and documentation | Prove personal privacy plus UC-305, UC-306, UC-308, UC-309, UC-310, and UC-506 authorization and replay failures. | Complete |
+
+#### Completion Checklist
+
+- [x] Every new and existing user has exactly one private personal workspace.
+- [x] Personal workspaces cannot accept invitations, additional members, or organization roles.
+- [x] A user's personal workspace cannot be transferred, removed, or entered by another user.
+- [x] Referral tokens are random, hashed at rest, expiring, rate-limited, and never grant workspace access.
+- [x] A referrer sees only masked invited, registered, verified, expired, or revoked status—not login or portfolio activity.
+- [x] Self-referrals and referrals for existing accounts are denied safely.
+- [x] Reward qualification and benefits remain disabled until a separate business plan is approved.
+- [x] Organization creation and owner membership occur in one database transaction.
+- [x] Invitation tokens are random, hashed at rest, expiring, and single-use.
+- [x] Invite acceptance cannot grant roles outside the approved catalog.
+- [x] Users can list and enter only their personal workspace and organizations where they have active membership.
+- [x] Scoped tokens identify the selected workspace, its type, and any verified organization roles.
+- [x] Unauthorized role changes, member reads, and removals are denied safely.
+- [x] Removing a member revokes bindings and active tenant access immediately.
+- [x] A last owner cannot be removed or demoted without a safe ownership transfer.
+- [x] PostgreSQL tests prove personal, cross-user, and cross-organization data isolation.
+- [x] Documentation and proposed workspace-management needs were reviewed by the project owner; no frontend screens were created or changed.
+
 ## Work Log
 
 ### August 14, 2026
@@ -412,6 +452,10 @@ Create secure signed-in sessions after approved login and MFA workflows, while g
 - Passed the completed Milestone 7 backend with 55 fast Python tests and 22 real PostgreSQL/Redis tests, including invitation replay, role authorization, personal isolation, scoped-token replacement, last-owner protection, and offboarding revocation paths.
 - Project owner approved the complete Milestone 7 delivery and authorized its GitHub pull request and merge.
 - Corrected the root README milestone status and added a permanent milestone-by-milestone Quality Assurance Tracker.
+- Opened Milestone 7 pull request #8 and passed all six GitHub quality checks.
+- Merged pull request #8 into `main` with merge commit `af6061df0eb92b8985384eb09f406ea774807263`.
+- Preserved the complete Milestone 7 goal, work items, and completion checklist in the permanent archive.
+- Started Milestone 8 recovery and controlled-administration planning on branch `codex/milestone-8-recovery-admin`.
 
 ## Decisions
 
@@ -428,8 +472,8 @@ Create secure signed-in sessions after approved login and MFA workflows, while g
 
 ## Current Blockers or Owner Actions
 
-There are no current owner blockers. Local signing keys will support development; AWS KMS credentials and production domains are not needed until production preparation.
+There are no current owner blockers. Local Mailpit and simulated providers support recovery development without paid credentials. AWS KMS credentials, production messaging providers, and production domains are not needed until later deployment milestones.
 
 ## Next Planned Milestone
 
-After personal and organization workspaces are accepted, Milestone 8 will add password recovery and controlled administrative support actions.
+After recovery and controlled administration are accepted, Milestone 9 will add audit review, privacy export, account erasure, and retention workflows.

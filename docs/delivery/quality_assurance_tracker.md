@@ -114,9 +114,8 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 | Token/offboarding | Tested scoped-token replacement and immediate organization access revocation while preserving unrelated access. | Ensures removing a member blocks only the intended organization access. | Passed |
 | Database migrations | Ran downgrade/upgrade checks and confirmed zero schema drift. | Proves the workspace schema can be deployed consistently and remains aligned with code. | Passed |
 | Full repository checks | Ran Python lint/type, web test/lint/type/build, Go test/vet, documentation, OpenAPI parsing, and Compose validation. | Confirms Milestone 7 did not break another service or shared contract. | Passed |
+| GitHub CI | Passed all 6 protected pull-request checks before merge. | Provides an independent automated merge gate. | Passed |
 | Owner review | Reviewed and approved Milestone 7; no frontend screen was created or changed. | Confirms the backend and documentation are accepted while respecting the UI approval rule. | Accepted |
-
-GitHub pull-request checks are added to this section after the Milestone 7 merge gate completes.
 
 ## Maintenance Rule
 

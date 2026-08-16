@@ -2,7 +2,7 @@
 
 Central authentication, session, organization-access, and user-management engine for the Vittavaan web platform and future mobile application.
 
-> **Current phase:** Milestone 7 personal and organization workspaces are complete and approved for GitHub merge. Milestone 8 recovery and controlled administration begins next.
+> **Current phase:** Milestone 7 personal and organization workspaces are complete on `main`. Milestone 8 recovery and controlled administration is now in progress.
 
 ## In Plain Language
 
