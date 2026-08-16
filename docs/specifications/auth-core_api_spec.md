@@ -76,7 +76,9 @@ This human-readable contract defines the intended API surface. During implementa
 
 | Method | Path | Use case | Result |
 |---|---|---|---|
-| POST | `/auth/mfa/verify` | UC-201, UC-202, UC-401 | Verify challenge code and issue a session. |
+| GET | `/auth/mfa/methods` | UC-201, UC-202, UC-203 | List methods available for a proven login workflow. |
+| POST | `/auth/mfa/challenge` | UC-201, UC-202 | Consume the login workflow and issue one short-lived challenge. |
+| POST | `/auth/mfa/verify` | UC-201, UC-202, UC-401 | Verify challenge code and return a session-ready workflow. |
 | POST | `/auth/mfa/challenge/resend` | UC-202 | Resend an eligible backup challenge. |
 | GET | `/auth/mfa/devices` | UC-204 | List enrolled factors without secrets. |
 | POST | `/auth/mfa/totp/setup` | UC-204 | Return temporary secret presentation and enrollment challenge. |
@@ -86,6 +88,7 @@ This human-readable contract defines the intended API surface. During implementa
 | POST | `/auth/passkeys/options` | UC-104, UC-203 | Create WebAuthn assertion options. |
 | POST | `/auth/passkeys/verify` | UC-104, UC-203 | Validate assertion for login or step-up. |
 | DELETE | `/auth/mfa/devices/{mfa_id}` | UC-204, UC-509 | Revoke a factor with reauthentication and last-factor rules. |
+| POST | `/auth/identities/collision/prove` | UC-307 | Prove the existing password before linking the already-verified social identity. |
 
 ### Session and Token Lifecycle
 
@@ -170,6 +173,18 @@ All admin endpoints require appropriate role claims, recent strong MFA, tenant c
 ```
 
 Primary login returns a workflow decision, not a JWT. Milestone 5 consumes the workflow for MFA and Milestone 6 issues a session only after every required check succeeds.
+
+### MFA completion response
+
+```json
+{
+  "result": "session_ready",
+  "workflow_token": "<opaque-five-minute-token>",
+  "backup_codes": []
+}
+```
+
+Backup codes are populated only when first generated and must be displayed once. MFA completion still returns no access or refresh token; Milestone 6 performs session issuance.
 
 ### Token response for mobile
 

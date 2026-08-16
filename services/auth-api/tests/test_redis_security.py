@@ -6,7 +6,9 @@ from redis.asyncio import Redis
 from auth_core.infrastructure.redis_security import (
     LOGIN_LOCK_TTL_SECONDS,
     LOGIN_WORKFLOW_TTL_SECONDS,
+    MFA_CHALLENGE_TTL_SECONDS,
     OTP_TTL_SECONDS,
+    WEBAUTHN_CHALLENGE_TTL_SECONDS,
     RedisSecurityStore,
     SecurityKeyFactory,
 )
@@ -89,3 +91,30 @@ async def test_oidc_state_is_consumed_once(integration_redis: Redis) -> None:
 
     assert first == {"provider": "google"}
     assert replay is None
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_mfa_and_webauthn_challenges_expire_and_are_single_use(
+    integration_redis: Redis,
+) -> None:
+    factory = SecurityKeyFactory(b"test-key-material-for-redis")
+    store = RedisSecurityStore(integration_redis, factory)
+    await store.store_mfa_challenge("mfa-token", {"method": "totp"})
+    await store.store_webauthn_challenge("passkey-token", {"purpose": "authenticate"})
+
+    mfa_ttl = await integration_redis.ttl(factory.mfa_challenge("mfa-token").name)
+    passkey_ttl = await integration_redis.ttl(
+        factory.webauthn_challenge("passkey-token").name
+    )
+    first_mfa = await store.consume_mfa_challenge("mfa-token")
+    replay_mfa = await store.consume_mfa_challenge("mfa-token")
+    first_passkey = await store.consume_webauthn_challenge("passkey-token")
+    replay_passkey = await store.consume_webauthn_challenge("passkey-token")
+
+    assert 0 < mfa_ttl <= MFA_CHALLENGE_TTL_SECONDS
+    assert 0 < passkey_ttl <= WEBAUTHN_CHALLENGE_TTL_SECONDS
+    assert first_mfa == {"method": "totp"}
+    assert replay_mfa is None
+    assert first_passkey == {"purpose": "authenticate"}
+    assert replay_passkey is None

@@ -129,6 +129,8 @@ class MFADevice(TimestampMixin, Base):
     label: Mapped[str | None] = mapped_column(String(120))
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_totp_step: Mapped[int | None] = mapped_column(BigInteger)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class WebAuthnCredential(TimestampMixin, Base):
