@@ -55,3 +55,7 @@ Every approved screen implementation will consider:
 ## Future Mobile Design
 
 The Expo application will preserve journey and visual tokens but use native navigation, secure storage, platform passkeys, deep links, and phone-sized layouts. Mobile wireframes will be reviewed separately before creation; desktop screens will not simply be shrunk without usability review.
+
+## Milestone 10 Planning Review
+
+The complete page-by-page review, proposed route map, implementation order, and security-related wireframe conflicts are documented in the [Web Experience Implementation Plan](./web_experience_implementation_plan.md). This planning work is ready for owner review; all missing designs remain permission-gated.

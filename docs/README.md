@@ -29,6 +29,7 @@ No document in this review set represents a production certification. Security, 
 
 - [Project Overview](./product/project_overview.md) - Plain-language purpose, users, outcomes, and boundaries.
 - [Screen and Experience Inventory](./product/screen_inventory.md) - Existing wireframes, missing experiences, and approval rules.
+- [Web Experience Implementation Plan](./product/web_experience_implementation_plan.md) - Screen-by-screen wireframe review, proposed navigation, API journey order, and owner decisions required before frontend work.
 - [Registration UI Recommendations](./product/registration_ui_recommendations.md) - Proposed signup and verification usability improvements awaiting visual approval.
 - [Login UI Recommendations](./product/login_ui_recommendations.md) - Proposed login, lock, step-up, fallback, and collision states awaiting visual approval.
 - [MFA and Passkey UI Recommendations](./product/mfa_and_passkey_ui_recommendations.md) - Proposed second-factor, enrollment, backup, and factor-management states awaiting visual approval.

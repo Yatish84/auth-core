@@ -157,6 +157,17 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 | GitHub CI | Passed all 6 protected pull-request checks before merge. | Provides an independent automated merge gate. | Passed |
 | Owner review | Reviewed and approved complete Milestone 9; no frontend screen was created or changed. | Confirms privacy and auditing are accepted while respecting the UI approval rule. | Accepted |
 
+## Milestone 10 - Web Experience
+
+| QA area | Check performed | Why it matters | Result |
+|---|---|---|---|
+| Wireframe visual review | Rendered and inspected all 11 pages of the supplied GroX PDF, including each empty, populated, enabled, and error state. | Ensures the plan reflects the actual visual baseline rather than only a written summary. | Passed |
+| API journey mapping | Mapped the existing and proposed screens to the 60 shared web/mobile API paths. | Prevents frontend journeys from inventing or duplicating backend behavior. | Passed |
+| Security copy review | Identified account-enumerating invalid-login wording and proposed generic replacement copy. | Prevents the website from weakening the backend's generic credential response. | Ready for owner review |
+| Recovery-flow review | Identified the wireframed reset OTP conflict with the delivered secure-link reset service and proposed aligned replacement states. | Keeps the website consistent with the implemented single-use recovery security. | Ready for owner review |
+| UI boundary | Confirmed no frontend code, screen, wireframe, or visual asset was created or changed. | Preserves the project owner's design-approval requirement. | Passed |
+| Owner review | Screen inventory, navigation, recommendations, and staged implementation scope are ready for review. | Frontend visual and code work remains blocked until explicitly approved. | Awaiting review |
+
 ## Maintenance Rule
 
 For every milestone, this file must be updated before merge with:

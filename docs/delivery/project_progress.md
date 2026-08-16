@@ -42,8 +42,8 @@ Turn the approved wireframes and completed reusable services into a clear, acces
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Wireframe reconciliation | Map the supplied PDF screens and documented missing experiences to the completed API workflows. | In progress |
-| Owner design approval | Present the proposed screen list, navigation, and any recommended visual improvements before implementation. | Not started |
+| Wireframe reconciliation | Map the supplied PDF screens and documented missing experiences to the completed API workflows. | Ready for review |
+| Owner design approval | Present the proposed screen list, navigation, and any recommended visual improvements before implementation. | Ready for review |
 | Shared web foundation | Establish the approved responsive layout, design tokens, reusable components, API client, and safe session handling. | Not started |
 | Registration and verification | Connect approved signup, verification, expiry, and resend experiences. | Not started |
 | Login and extra security | Connect password, phone, social login, MFA, passkey, fallback, and collision-proof experiences. | Not started |
@@ -571,6 +571,11 @@ Give users controlled access to their personal data and safe account erasure whi
 - Merged pull request #10 into `main` with merge commit `2613681ac55700cafb37af5f601c55761d1068ad`.
 - Preserved the complete Milestone 9 goal, work items, and completion checklist in the permanent archive.
 - Started Milestone 10 web-experience planning on branch `codex/milestone-10-web-experience`; no frontend visual change is authorized yet.
+- Reviewed all 11 pages of the supplied GroX wireframe PDF and mapped each authentication state to the delivered shared APIs.
+- Documented proposed public, signed-in user, and protected staff navigation without changing frontend code or visuals.
+- Identified two approval-sensitive conflicts: account-revealing invalid-login copy and a reset OTP flow that differs from the delivered secure-link recovery service.
+- Proposed a staged implementation order beginning with shared components plus email signup, verification, login, and secure-link recovery.
+- Marked the screen inventory, navigation plan, and UI recommendations ready for project-owner review.
 
 ## Decisions
 
