@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     refresh_token_hmac_secret: str = "local-refresh-token-key-change-me"
     workspace_token_hmac_secret: str = "local-workspace-token-key-change-me"
     recovery_token_hmac_secret: str = "local-recovery-token-key-change-me"
+    privacy_idempotency_hmac_secret: str = "local-privacy-idempotency-key-change-me"
     jwt_issuer: str = "http://localhost:8000"
     jwt_audience: str = "grox-platform"
 

@@ -38,7 +38,22 @@ flowchart LR
 
 ## Remaining Milestone 9 Work
 
-- User data-export requests and encrypted, expiring artifacts (`UC-601`).
 - Account-erasure requests, access revocation, and irreversible anonymization (`UC-602`).
 - Configuration-backed retention and documented backup-expiry operations.
 - Privacy and audit screens only after project-owner design approval.
+
+## Delivered Data Export Flow
+
+```mermaid
+flowchart LR
+    USER["Authenticated user with recent MFA"] --> REQUEST["POST privacy export with idempotency key"]
+    REQUEST --> REUSE{"Matching request already exists?"}
+    REUSE -- Yes --> STATUS["Return the original safe status"]
+    REUSE -- No --> COLLECT["Collect only the owner's approved profile, identity, MFA, session, device, and workspace-role metadata"]
+    COLLECT --> EXCLUDE["Exclude password hashes, MFA secrets, refresh tokens, and signing material"]
+    EXCLUDE --> ENCRYPT["Encrypt JSON with AES-256-GCM and owner/request binding"]
+    ENCRYPT --> STORE["Store ciphertext and digest for 24 hours"]
+    STORE --> DOWNLOAD["Owner reauthenticates and downloads verified JSON"]
+```
+
+The MVP stores encrypted artifacts in PostgreSQL. The same `PrivacyRepository` and cipher boundaries can use AWS S3 plus KMS in production without changing the web or future mobile API.

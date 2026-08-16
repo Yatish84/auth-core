@@ -52,6 +52,7 @@ erDiagram
 | `contact_change_requests` | Dual-channel contact proof | Hashed old/new codes, ten-minute expiry, both proofs before application. |
 | `governed_requests` | Four-eyes and delayed actions | Initiator differs from approver; target version, approval time, and execute-after timestamp. |
 | `gdpr_requests` | Export and erasure lifecycle | State machine, timestamps, artifact reference. |
+| `privacy_export_artifacts` | Encrypted, short-lived personal-data exports | Owner/request-bound ciphertext, digest, expiry, and row isolation. |
 | `audit_logs` | Append-only security history | No update/delete application grants; tamper-evident linkage. |
 | `outbox_events` | Reliable async work | Claimed/attempted status, idempotency key, redacted payload. |
 

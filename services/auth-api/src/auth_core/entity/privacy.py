@@ -9,6 +9,9 @@ class PrivacyErrorCode(StrEnum):
     RECENT_MFA_REQUIRED = "AUTH_RECENT_MFA_REQUIRED"
     AUDIT_FORBIDDEN = "AUTH_AUDIT_FORBIDDEN"
     AUDIT_CURSOR_INVALID = "AUTH_AUDIT_CURSOR_INVALID"
+    REQUEST_NOT_FOUND = "AUTH_PRIVACY_REQUEST_NOT_FOUND"
+    EXPORT_UNAVAILABLE = "AUTH_PRIVACY_EXPORT_UNAVAILABLE"
+    EXPORT_INTEGRITY_FAILED = "AUTH_PRIVACY_EXPORT_INTEGRITY_FAILED"
 
 
 class PrivacyError(Exception):
@@ -45,3 +48,30 @@ class AuditRecord:
 class AuditPage:
     items: tuple[AuditRecord, ...]
     next_cursor: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class PrivacyRequestRecord:
+    request_id: UUID
+    user_id: UUID
+    request_type: str
+    state: str
+    requested_at: datetime
+    completed_at: datetime | None
+    artifact_expires_at: datetime | None
+    failure_code: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class EncryptedExportArtifact:
+    request_id: UUID
+    encrypted_content: bytes
+    content_digest: str
+    expires_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class ExportDownload:
+    request_id: UUID
+    content: bytes
+    expires_at: datetime

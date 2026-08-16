@@ -141,11 +141,13 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 
 | QA area | Check performed | Why it matters | Result |
 |---|---|---|---|
-| Focused audit tests | Ran 6 control and HTTP tests for MFA, staff authorization, redaction, pagination cursors, successful responses, and RFC 7807 denial. | Proves UC-505 behavior before broader privacy workflows are added. | Passed |
-| Real database isolation | Ran 1 PostgreSQL integration test under the restricted `auth_app` role. | Proves an ordinary user cannot read another user's audit evidence while an active L3 security supervisor can. | Passed |
-| Database migration | Created a fresh migrated test database through migration `0010_audit_query_access`. | Proves the security function and row-level policy install successfully from an empty database. | Passed |
+| Focused privacy tests | Ran 11 control and HTTP tests for audit authorization, redaction, cursors, encrypted export, retry reuse, tamper rejection, and download responses. | Proves the delivered UC-505 and UC-601 behavior before account erasure is added. | Passed |
+| Real database isolation | Ran 2 PostgreSQL integration tests under the restricted `auth_app` role. | Proves audit authorization plus owner-only encrypted export storage against real row-level security. | Passed |
+| Database migrations | Created fresh test databases through migrations `0010` and `0011`, confirmed zero schema drift, then downgraded and re-upgraded `0011`. | Proves the audit policy, privacy request policy, and encrypted artifact table install and reverse safely. | Passed |
+| Export encryption | Confirmed the owner's plaintext email is absent from stored artifact bytes and that owner/request binding plus digest verification rejects tampering. | Prevents database readers or modified ciphertext from silently exposing or changing an export. | Passed |
+| Idempotency and expiry | Confirmed a repeated key returns the original request and artifacts receive a 24-hour expiry. | Prevents duplicate work and limits the lifetime of downloadable personal data. | Passed |
 | Focused code quality | Ran Ruff and MyPy against the new privacy and audit modules. | Catches formatting, unsafe typing, and interface mistakes in the changed scope. | Passed |
-| Shared API contract | Parsed the shared OpenAPI contract with 56 paths. | Keeps the website and future mobile app aligned to the same audit service. | Passed |
+| Shared API contract | Parsed the shared OpenAPI contract with 59 paths. | Keeps the website and future mobile app aligned to the same audit and export services. | Passed |
 | UI boundary | Confirmed no frontend screen or wireframe was created or changed. | Preserves the project owner's design-approval requirement. | Passed |
 | Owner review | Audit-query increment is ready for project-owner review. | Final Milestone 9 acceptance remains pending until export, erasure, and retention work is complete. | In progress |
 

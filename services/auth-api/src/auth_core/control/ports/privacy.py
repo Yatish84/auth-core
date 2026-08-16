@@ -2,7 +2,12 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from auth_core.entity.privacy import AuditPage, AuditSearchFilter
+from auth_core.entity.privacy import (
+    AuditPage,
+    AuditSearchFilter,
+    EncryptedExportArtifact,
+    PrivacyRequestRecord,
+)
 from auth_core.entity.recovery import StaffRole
 
 
@@ -17,3 +22,43 @@ class AuditRepository(Protocol):
         limit: int,
         correlation_id: UUID,
     ) -> AuditPage: ...
+
+
+class PrivacyCipher(Protocol):
+    def encrypt(self, plaintext: bytes, associated_data: bytes) -> bytes: ...
+
+    def decrypt(self, ciphertext: bytes, associated_data: bytes) -> bytes: ...
+
+
+class PrivacyRepository(Protocol):
+    async def get_or_create_export(
+        self,
+        user_id: UUID,
+        idempotency_key_hash: str,
+        artifact_expires_at: datetime,
+        correlation_id: UUID,
+    ) -> tuple[PrivacyRequestRecord, bool]: ...
+
+    async def collect_export_data(self, user_id: UUID) -> dict[str, object]: ...
+
+    async def complete_export(
+        self,
+        request_id: UUID,
+        user_id: UUID,
+        encrypted_content: bytes,
+        content_digest: str,
+        artifact_expires_at: datetime,
+        correlation_id: UUID,
+    ) -> PrivacyRequestRecord: ...
+
+    async def fail_export(
+        self, request_id: UUID, user_id: UUID, failure_code: str
+    ) -> None: ...
+
+    async def get_privacy_request(
+        self, user_id: UUID, request_id: UUID
+    ) -> PrivacyRequestRecord | None: ...
+
+    async def get_export_artifact(
+        self, user_id: UUID, request_id: UUID, now: datetime
+    ) -> EncryptedExportArtifact | None: ...

@@ -821,6 +821,51 @@ paths:
         "400": {$ref: "#/components/responses/Problem"}
         "401": {$ref: "#/components/responses/Problem"}
         "403": {$ref: "#/components/responses/Problem"}
+  /api/v1/privacy/exports:
+    post:
+      operationId: requestPrivacyExport
+      tags: [privacy and auditing]
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      responses:
+        "202": {$ref: "#/components/responses/PrivacyRequest"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
+        "503": {$ref: "#/components/responses/Problem"}
+  /api/v1/privacy/requests/{request_id}:
+    get:
+      operationId: getPrivacyRequest
+      tags: [privacy and auditing]
+      security: [{bearerAuth: []}]
+      parameters:
+        - {$ref: "#/components/parameters/PrivacyRequestId"}
+      responses:
+        "200": {$ref: "#/components/responses/PrivacyRequest"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "404": {$ref: "#/components/responses/Problem"}
+  /api/v1/privacy/exports/{request_id}/download:
+    get:
+      operationId: downloadPrivacyExport
+      tags: [privacy and auditing]
+      security: [{bearerAuth: []}]
+      parameters:
+        - {$ref: "#/components/parameters/PrivacyRequestId"}
+      responses:
+        "200":
+          description: Decrypted owner-only JSON export streamed without caching.
+          headers:
+            Content-Disposition: {schema: {type: string}}
+            X-Artifact-Expires-At: {schema: {type: string, format: date-time}}
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: true}
+        "401": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
+        "410": {$ref: "#/components/responses/Problem"}
   /.well-known/jwks.json:
     get:
       operationId: getSigningKeys
@@ -866,6 +911,11 @@ components:
     ResetId:
       in: path
       name: reset_id
+      required: true
+      schema: {type: string, format: uuid}
+    PrivacyRequestId:
+      in: path
+      name: request_id
       required: true
       schema: {type: string, format: uuid}
   responses:
@@ -919,6 +969,11 @@ components:
       content:
         application/json:
           schema: {$ref: "#/components/schemas/GovernedResetResponse"}
+    PrivacyRequest:
+      description: Owner-visible privacy workflow status.
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/PrivacyRequestResponse"}
   schemas:
     PasswordForgotRequest:
       type: object
@@ -1037,6 +1092,18 @@ components:
           maxItems: 100
           items: {$ref: "#/components/schemas/AuditRecord"}
         next_cursor: {type: [string, "null"]}
+    PrivacyRequestResponse:
+      type: object
+      additionalProperties: false
+      required: [request_id, request_type, state, requested_at, completed_at, artifact_expires_at, failure_code]
+      properties:
+        request_id: {type: string, format: uuid}
+        request_type: {type: string, enum: [export, erasure]}
+        state: {type: string, enum: [requested, processing, completed, failed, cancelled]}
+        requested_at: {type: string, format: date-time}
+        completed_at: {type: [string, "null"], format: date-time}
+        artifact_expires_at: {type: [string, "null"], format: date-time}
+        failure_code: {type: [string, "null"]}
     EmailSignupRequest:
       type: object
       additionalProperties: false

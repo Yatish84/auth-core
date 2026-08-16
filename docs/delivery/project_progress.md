@@ -45,8 +45,8 @@ Give users controlled access to their personal data and safe account erasure whi
 | Audit-query foundation | Define authorized, paginated, redacted audit searches without weakening immutable audit storage. | Implemented |
 | Authorized audit search | Let approved security auditors filter and review relevant audit evidence for UC-505. | Implemented |
 | Audit privacy controls | Redact unnecessary sensitive values and prevent access outside the reviewer's permitted scope. | Implemented |
-| Data-export request | Let a reauthenticated user request a machine-readable copy of their stored personal data for UC-601. | Not started |
-| Protected export artifact | Assemble, encrypt, authorize, expire, and safely download the user's export. | Not started |
+| Data-export request | Let a reauthenticated user request a machine-readable copy of their stored personal data for UC-601. | Implemented |
+| Protected export artifact | Assemble, encrypt, authorize, expire, and safely download the user's export. | Implemented |
 | Account-erasure request | Let a reauthenticated user request erasure with clear warnings and track its progress for UC-602. | Not started |
 | Anonymization and access removal | Revoke access, remove or irreversibly anonymize personal data, and preserve only lawful pseudonymous evidence. | Not started |
 | Retention and backup expiry | Enforce configurable retention and document the approved operational path for expiring backup copies. | Not started |
@@ -58,10 +58,10 @@ Give users controlled access to their personal data and safe account erasure whi
 - [x] Only authorized security reviewers can search audit evidence.
 - [x] Audit results are paginated, filtered safely, and redact unnecessary sensitive values.
 - [x] Audit records remain append-only and cannot be changed through the application.
-- [ ] A user must recently reauthenticate before requesting an export or erasure.
-- [ ] A user's export contains only their own permitted data in a machine-readable format.
-- [ ] Export artifacts are encrypted, access-controlled, short-lived, and unavailable after expiry.
-- [ ] Duplicate privacy requests are handled safely through idempotency controls.
+- [x] A user must recently reauthenticate before requesting an export; the same rule is reserved for erasure.
+- [x] A user's export contains only their own permitted data in a machine-readable format.
+- [x] Export artifacts are encrypted, access-controlled, short-lived, and unavailable after expiry.
+- [x] Duplicate export requests are handled safely through idempotency controls.
 - [ ] Erasure immediately disables access and revokes active sessions before anonymization.
 - [ ] Erasure removes or irreversibly anonymizes personal data while preserving only lawful pseudonymous audit evidence.
 - [ ] Privacy-request status clearly reports queued, processing, complete, and failed states without exposing private data.
@@ -514,6 +514,13 @@ Help users safely regain account access while ensuring that powerful support act
 - Added migration `0010_audit_query_access` so PostgreSQL independently permits approved cross-user audit review while retaining user and organization isolation.
 - Expanded the shared web/mobile OpenAPI contract from 55 to 56 paths without creating or changing frontend screens.
 - Passed 6 focused Python tests and 1 real PostgreSQL row-isolation test plus focused lint, type, and OpenAPI checks.
+- Added UC-601 export request, owner-only status, and JSON download endpoints with recent-MFA and idempotency enforcement.
+- Added AES-256-GCM export encryption bound to both the owner and request, SHA-256 integrity verification, and automatic 24-hour artifact expiry.
+- Excluded password hashes, MFA secrets, refresh tokens, and signing material while exporting approved profile, identity, factor, session, device, and workspace-role metadata.
+- Added migration `0011_privacy_export_artifacts` with owner-isolated RLS for both privacy requests and encrypted artifacts.
+- Expanded the shared web/mobile OpenAPI contract from 56 to 59 paths without creating or changing frontend screens.
+- Passed 11 focused privacy/audit tests and 2 real PostgreSQL tests, including encrypted-at-rest content, idempotent retry, artifact ownership isolation, and tamper detection.
+- Rehearsed a fresh migration upgrade, confirmed zero schema drift, downgraded migration `0011`, and successfully upgraded it again.
 
 ## Decisions
 

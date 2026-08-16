@@ -3,21 +3,35 @@ from typing import Annotated, Any, Literal, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Header, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
-from auth_core.boundary.http.registration import request_id
+from auth_core.boundary.http.registration import request_id as correlation_request_id
 from auth_core.boundary.http.session import access_claims
-from auth_core.control.privacy import AuditQueryControl
-from auth_core.entity.privacy import AuditRecord, AuditSearchFilter, PrivacyError
+from auth_core.config import get_settings
+from auth_core.control.privacy import AuditQueryControl, GDPRControl
+from auth_core.entity.privacy import (
+    AuditRecord,
+    AuditSearchFilter,
+    PrivacyError,
+    PrivacyRequestRecord,
+)
 from auth_core.entity.session import SessionError
 from auth_core.infrastructure.database import session_factory
 from auth_core.infrastructure.persistence.privacy_repository import (
     SqlAlchemyAuditRepository,
+    SqlAlchemyPrivacyRepository,
 )
+from auth_core.infrastructure.security.secrets import LocalAESGCMSecretCipher
 
 router = APIRouter(prefix="/api/v1", tags=["privacy and auditing"])
 audit_control = AuditQueryControl(SqlAlchemyAuditRepository(session_factory))
+settings = get_settings()
+gdpr_control = GDPRControl(
+    SqlAlchemyPrivacyRepository(session_factory),
+    LocalAESGCMSecretCipher(settings.local_data_encryption_key),
+    settings.privacy_idempotency_hmac_secret.encode(),
+)
 
 
 class AuditRecordResponse(BaseModel):
@@ -35,6 +49,16 @@ class AuditRecordResponse(BaseModel):
 class AuditPageResponse(BaseModel):
     items: list[AuditRecordResponse]
     next_cursor: str | None
+
+
+class PrivacyRequestResponse(BaseModel):
+    request_id: UUID
+    request_type: Literal["export", "erasure"]
+    state: Literal["requested", "processing", "completed", "failed", "cancelled"]
+    requested_at: datetime
+    completed_at: datetime | None
+    artifact_expires_at: datetime | None
+    failure_code: str | None
 
 
 def problem(
@@ -70,7 +94,7 @@ async def search_audit_logs(
     cursor: Annotated[str | None, Query(min_length=8, max_length=256)] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> AuditPageResponse | JSONResponse:
-    correlation_id = request_id(x_request_id)
+    correlation_id = correlation_request_id(x_request_id)
     try:
         claims = await access_claims(authorization)
         page = await audit_control.search(
@@ -105,4 +129,80 @@ def audit_model(record: AuditRecord) -> AuditRecordResponse:
         correlation_id=record.correlation_id,
         metadata=record.metadata,
         occurred_at=record.occurred_at,
+    )
+
+
+@router.post("/privacy/exports", response_model=PrivacyRequestResponse, status_code=202)
+async def request_privacy_export(
+    request: Request,
+    idempotency_key: Annotated[
+        str, Header(alias="Idempotency-Key", min_length=8, max_length=128)
+    ],
+    authorization: Annotated[str | None, Header()] = None,
+    x_request_id: Annotated[str | None, Header()] = None,
+) -> PrivacyRequestResponse | JSONResponse:
+    correlation_id = correlation_request_id(x_request_id)
+    try:
+        claims = await access_claims(authorization)
+        record = await gdpr_control.request_export(
+            claims, idempotency_key, correlation_id
+        )
+    except (PrivacyError, SessionError) as error:
+        return problem(request, error, correlation_id)
+    return privacy_request_model(record)
+
+
+@router.get(
+    "/privacy/requests/{request_id}", response_model=PrivacyRequestResponse
+)
+async def get_privacy_request(
+    request_id: UUID,
+    request: Request,
+    authorization: Annotated[str | None, Header()] = None,
+) -> PrivacyRequestResponse | JSONResponse:
+    correlation_id = correlation_request_id(None)
+    try:
+        claims = await access_claims(authorization)
+        record = await gdpr_control.get_request(claims, request_id)
+    except (PrivacyError, SessionError) as error:
+        return problem(request, error, correlation_id)
+    return privacy_request_model(record)
+
+
+@router.get("/privacy/exports/{request_id}/download")
+async def download_privacy_export(
+    request_id: UUID,
+    request: Request,
+    authorization: Annotated[str | None, Header()] = None,
+) -> Response:
+    correlation_id = correlation_request_id(None)
+    try:
+        claims = await access_claims(authorization)
+        download = await gdpr_control.download_export(claims, request_id)
+    except (PrivacyError, SessionError) as error:
+        return problem(request, error, correlation_id)
+    return Response(
+        content=download.content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="vittavaan-data-export-{download.request_id}.json"'
+            ),
+            "X-Artifact-Expires-At": download.expires_at.isoformat(),
+        },
+    )
+
+
+def privacy_request_model(record: PrivacyRequestRecord) -> PrivacyRequestResponse:
+    return PrivacyRequestResponse(
+        request_id=record.request_id,
+        request_type=cast(Literal["export", "erasure"], record.request_type),
+        state=cast(
+            Literal["requested", "processing", "completed", "failed", "cancelled"],
+            record.state,
+        ),
+        requested_at=record.requested_at,
+        completed_at=record.completed_at,
+        artifact_expires_at=record.artifact_expires_at,
+        failure_code=record.failure_code,
     )

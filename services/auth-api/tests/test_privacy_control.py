@@ -1,15 +1,18 @@
+import json
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
 
-from auth_core.control.privacy import AuditQueryControl
+from auth_core.control.privacy import AuditQueryControl, GDPRControl
 from auth_core.entity.privacy import (
     AuditPage,
     AuditRecord,
     AuditSearchFilter,
+    EncryptedExportArtifact,
     PrivacyError,
     PrivacyErrorCode,
+    PrivacyRequestRecord,
 )
 from auth_core.entity.recovery import StaffRole
 from auth_core.entity.session import AccessClaims, ClientType
@@ -121,3 +124,141 @@ def test_audit_cursor_round_trip_and_invalid_rejection() -> None:
     with pytest.raises(PrivacyError) as raised:
         AuditQueryControl.decode_cursor("not-a-valid-cursor")
     assert raised.value.code is PrivacyErrorCode.AUDIT_CURSOR_INVALID
+
+
+class CipherFake:
+    def encrypt(self, plaintext: bytes, associated_data: bytes) -> bytes:
+        return associated_data + b"|" + plaintext[::-1]
+
+    def decrypt(self, ciphertext: bytes, associated_data: bytes) -> bytes:
+        prefix = associated_data + b"|"
+        if not ciphertext.startswith(prefix):
+            raise ValueError("wrong owner")
+        return ciphertext[len(prefix) :][::-1]
+
+
+class PrivacyRepositoryFake:
+    def __init__(self) -> None:
+        self.user_id = uuid4()
+        self.request_id = uuid4()
+        self.created = True
+        self.collect_calls = 0
+        self.request = self._request("processing")
+        self.artifact: EncryptedExportArtifact | None = None
+
+    def _request(self, state: str) -> PrivacyRequestRecord:
+        now = datetime.now(UTC)
+        return PrivacyRequestRecord(
+            self.request_id,
+            self.user_id,
+            "export",
+            state,
+            now,
+            now if state == "completed" else None,
+            now + timedelta(hours=24),
+            None,
+        )
+
+    async def get_or_create_export(
+        self,
+        user_id: UUID,
+        idempotency_key_hash: str,
+        artifact_expires_at: datetime,
+        correlation_id: UUID,
+    ) -> tuple[PrivacyRequestRecord, bool]:
+        del idempotency_key_hash, artifact_expires_at, correlation_id
+        if self.created:
+            self.user_id = user_id
+            self.request = self._request("processing")
+        return self.request, self.created
+
+    async def collect_export_data(self, user_id: UUID) -> dict[str, object]:
+        self.collect_calls += 1
+        return {"profile": {"user_id": str(user_id), "email": "owner@example.com"}}
+
+    async def complete_export(
+        self,
+        request_id: UUID,
+        user_id: UUID,
+        encrypted_content: bytes,
+        content_digest: str,
+        artifact_expires_at: datetime,
+        correlation_id: UUID,
+    ) -> PrivacyRequestRecord:
+        del correlation_id
+        self.artifact = EncryptedExportArtifact(
+            request_id, encrypted_content, content_digest, artifact_expires_at
+        )
+        self.user_id = user_id
+        self.request = self._request("completed")
+        return self.request
+
+    async def fail_export(
+        self, request_id: UUID, user_id: UUID, failure_code: str
+    ) -> None:
+        del request_id, user_id, failure_code
+
+    async def get_privacy_request(
+        self, user_id: UUID, request_id: UUID
+    ) -> PrivacyRequestRecord | None:
+        if user_id == self.user_id and request_id == self.request_id:
+            return self.request
+        return None
+
+    async def get_export_artifact(
+        self, user_id: UUID, request_id: UUID, now: datetime
+    ) -> EncryptedExportArtifact | None:
+        del now
+        if user_id == self.user_id and request_id == self.request_id:
+            return self.artifact
+        return None
+
+
+@pytest.mark.asyncio
+async def test_privacy_export_is_encrypted_and_downloaded_for_owner() -> None:
+    repository = PrivacyRepositoryFake()
+    owner_claims = claims()
+    repository.user_id = owner_claims.user_id
+    control = GDPRControl(repository, CipherFake(), b"idempotency-pepper")
+
+    request = await control.request_export(owner_claims, "unique-request-key", uuid4())
+    download = await control.download_export(owner_claims, request.request_id)
+
+    assert request.state == "completed"
+    assert repository.artifact is not None
+    assert b"owner@example.com" not in repository.artifact.encrypted_content
+    assert json.loads(download.content)["profile"]["user_id"] == str(owner_claims.user_id)
+
+
+@pytest.mark.asyncio
+async def test_duplicate_export_request_reuses_record_without_rebuilding() -> None:
+    repository = PrivacyRepositoryFake()
+    repository.created = False
+    repository.request = repository._request("completed")
+    control = GDPRControl(repository, CipherFake(), b"idempotency-pepper")
+
+    result = await control.request_export(claims(), "same-request-key", uuid4())
+
+    assert result.state == "completed"
+    assert repository.collect_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_tampered_export_fails_integrity_check() -> None:
+    repository = PrivacyRepositoryFake()
+    owner_claims = claims()
+    repository.user_id = owner_claims.user_id
+    control = GDPRControl(repository, CipherFake(), b"idempotency-pepper")
+    request = await control.request_export(owner_claims, "tamper-request-key", uuid4())
+    assert repository.artifact is not None
+    repository.artifact = EncryptedExportArtifact(
+        repository.artifact.request_id,
+        repository.artifact.encrypted_content,
+        "0" * 64,
+        repository.artifact.expires_at,
+    )
+
+    with pytest.raises(PrivacyError) as raised:
+        await control.download_export(owner_claims, request.request_id)
+
+    assert raised.value.code is PrivacyErrorCode.EXPORT_INTEGRITY_FAILED

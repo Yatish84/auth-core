@@ -1,16 +1,21 @@
 import base64
 import binascii
-from datetime import datetime
+import hmac
+import json
+from datetime import UTC, datetime, timedelta
+from hashlib import sha256
 from typing import Any
 from uuid import UUID
 
-from auth_core.control.ports.privacy import AuditRepository
+from auth_core.control.ports.privacy import AuditRepository, PrivacyCipher, PrivacyRepository
 from auth_core.entity.privacy import (
     AuditPage,
     AuditRecord,
     AuditSearchFilter,
+    ExportDownload,
     PrivacyError,
     PrivacyErrorCode,
+    PrivacyRequestRecord,
 )
 from auth_core.entity.recovery import StaffRole
 from auth_core.entity.session import AccessClaims
@@ -28,6 +33,7 @@ SENSITIVE_METADATA_TERMS = {
     "token",
     "user_agent",
 }
+EXPORT_ARTIFACT_TTL = timedelta(hours=24)
 
 
 class AuditQueryControl:
@@ -129,3 +135,115 @@ class AuditQueryControl:
         if value is None or isinstance(value, (bool, int, float)):
             return value
         return "[REDACTED]"
+
+
+class GDPRControl:
+    def __init__(
+        self,
+        repository: PrivacyRepository,
+        cipher: PrivacyCipher,
+        idempotency_pepper: bytes,
+    ) -> None:
+        self._repository = repository
+        self._cipher = cipher
+        self._idempotency_pepper = idempotency_pepper
+
+    async def request_export(
+        self,
+        claims: AccessClaims,
+        idempotency_key: str,
+        correlation_id: UUID,
+    ) -> PrivacyRequestRecord:
+        AuditQueryControl._require_recent_mfa(claims)
+        expires_at = datetime.now(UTC) + EXPORT_ARTIFACT_TTL
+        request, created = await self._repository.get_or_create_export(
+            claims.user_id,
+            self._key_hash(idempotency_key),
+            expires_at,
+            correlation_id,
+        )
+        if not created:
+            return request
+        try:
+            export_data = await self._repository.collect_export_data(claims.user_id)
+            plaintext = json.dumps(
+                export_data, sort_keys=True, separators=(",", ":")
+            ).encode()
+            encrypted = self._cipher.encrypt(
+                plaintext, self._associated_data(claims.user_id, request.request_id)
+            )
+            return await self._repository.complete_export(
+                request.request_id,
+                claims.user_id,
+                encrypted,
+                sha256(plaintext).hexdigest(),
+                expires_at,
+                correlation_id,
+            )
+        except Exception as error:
+            await self._repository.fail_export(
+                request.request_id, claims.user_id, "EXPORT_BUILD_FAILED"
+            )
+            raise PrivacyError(
+                PrivacyErrorCode.EXPORT_UNAVAILABLE,
+                "The export could not be prepared. Please try again later.",
+                503,
+            ) from error
+
+    async def get_request(
+        self, claims: AccessClaims, request_id: UUID
+    ) -> PrivacyRequestRecord:
+        request = await self._repository.get_privacy_request(claims.user_id, request_id)
+        if request is None:
+            raise PrivacyError(
+                PrivacyErrorCode.REQUEST_NOT_FOUND,
+                "The privacy request was not found.",
+                404,
+            )
+        return request
+
+    async def download_export(
+        self, claims: AccessClaims, request_id: UUID
+    ) -> ExportDownload:
+        AuditQueryControl._require_recent_mfa(claims)
+        request = await self.get_request(claims, request_id)
+        if request.request_type != "export" or request.state != "completed":
+            raise self._export_unavailable()
+        artifact = await self._repository.get_export_artifact(
+            claims.user_id, request_id, datetime.now(UTC)
+        )
+        if artifact is None:
+            raise self._export_unavailable()
+        try:
+            plaintext = self._cipher.decrypt(
+                artifact.encrypted_content,
+                self._associated_data(claims.user_id, request_id),
+            )
+        except ValueError as error:
+            raise PrivacyError(
+                PrivacyErrorCode.EXPORT_INTEGRITY_FAILED,
+                "The export failed its security verification.",
+                500,
+            ) from error
+        if not hmac.compare_digest(sha256(plaintext).hexdigest(), artifact.content_digest):
+            raise PrivacyError(
+                PrivacyErrorCode.EXPORT_INTEGRITY_FAILED,
+                "The export failed its security verification.",
+                500,
+            )
+        return ExportDownload(request_id, plaintext, artifact.expires_at)
+
+    def _key_hash(self, key: str) -> str:
+        return hmac.new(self._idempotency_pepper, key.encode(), sha256).hexdigest()
+
+    @staticmethod
+    def _associated_data(user_id: UUID, request_id: UUID) -> bytes:
+        return user_id.bytes + request_id.bytes
+
+    @staticmethod
+    def _export_unavailable() -> PrivacyError:
+        return PrivacyError(
+            PrivacyErrorCode.EXPORT_UNAVAILABLE,
+            "The export is unavailable, incomplete, or expired.",
+            410,
+        )
