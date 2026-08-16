@@ -1,6 +1,6 @@
 # Project Progress Tracker
 
-**Last updated:** August 14, 2026
+**Last updated:** August 15, 2026
 
 This file is the simple, ongoing record of what has been planned, what is being built, what has been completed, and what is blocking progress. It will be updated as part of every milestone and important pull request.
 
@@ -21,7 +21,7 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 0. Documentation | Agree on what we are building before writing application code. | Complete |
 | 1. Project foundation | Create the folders, tools, local services, and automatic checks needed for development. | Complete |
 | 2. Data foundation | Create the secure database and temporary storage structures. | Complete |
-| 3. Registration | Allow a user to create and verify an account. | Not started |
+| 3. Registration | Allow a user to create and verify an account. | Complete |
 | 4. Login | Allow safe password, phone, and social sign-in. | Not started |
 | 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Not started |
 | 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Not started |
@@ -32,36 +32,37 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 11. Public test website | Publish the controlled MVP for stakeholder testing. | Not started |
 | 12. AWS production preparation | Harden and move the system to the final AWS environment. | Not started |
 
-## Current Milestone: 2 - Data Foundation
+## Current Milestone: 3 - Registration and Verification
 
 ### Goal
 
-Create the secure, reusable storage layer that future web and mobile registration, login, session, organization, recovery, and audit workflows will share.
+Build one secure registration and contact-verification service that the web app and future mobile app can both use.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Migration system | Add numbered, repeatable database changes using Alembic. | Complete |
-| Durable tables | Create the approved PostgreSQL tables for identities, security, organizations, governance, privacy, and events. | Complete |
-| Data safety rules | Enforce uniqueness, valid state, secure relationships, and concurrency rules in PostgreSQL. | Complete |
-| Tenant isolation | Prevent one organization from reading or changing another organization's records. | Complete |
-| Audit protection | Prevent application-level alteration or deletion of security audit history. | Complete |
-| Redis security keys | Add reusable expiring structures for OTPs, challenges, limits, revocations, and risk state. | Complete |
-| Repository layer | Add controlled data-access interfaces and PostgreSQL implementations for future workflows. | Complete |
-| Integration tests | Test migrations, constraints, audit immutability, Redis expiry, and tenant isolation with real services. | Complete |
-| CI and documentation | Run persistence checks automatically and explain the delivered storage model in plain language. | Complete |
+| Shared API contracts | Define reusable email and phone registration requests and responses for web and mobile. | Complete |
+| Email registration | Create a pending account after validation, breach checking, and secure password hashing. | Complete |
+| Email verification | Send, resend, expire, and consume single-use verification links. | Complete |
+| Phone registration | Create a pending account and verify ownership using a short-lived OTP. | Complete |
+| Abuse protection | Enforce CAPTCHA boundaries, rate limits, OTP attempts, and safe duplicate handling. | Complete |
+| Provider adapters | Add interchangeable HIBP, CAPTCHA, email, and SMS boundaries with safe local implementations. | Complete |
+| Audit evidence | Record redacted registration and verification outcomes without secrets. | Complete |
+| Acceptance tests | Prove UC-301, UC-302, and UC-304 success and failure paths using PostgreSQL and Redis. | Complete |
+| UI recommendation | Document proposed usability improvements without changing approved wireframes. | Complete |
+| Documentation and CI | Update contracts, traceability, diagrams, developer guidance, and automated checks. | Complete |
 
 ### Completion Checklist
 
-- [x] An empty PostgreSQL database upgrades to the latest schema.
-- [x] All approved tables and important constraints exist.
-- [x] Cross-organization reads and writes are rejected.
-- [x] Audit records reject update and delete attempts.
-- [x] Redis security keys use safe identifiers and explicit expiration.
-- [x] Repository and migration integration tests pass.
-- [x] No plaintext secrets or customer data are committed.
-- [x] Documentation is updated and reviewed.
+- [x] Email registration creates a pending account and never stores plaintext passwords.
+- [x] Breached passwords and invalid CAPTCHA proofs are rejected safely.
+- [x] Email verification links are hashed, expiring, single-use, and resendable.
+- [x] Phone OTPs are hashed, rate-limited, attempt-limited, and short-lived.
+- [x] Duplicate and unknown-contact responses do not leak unsafe account details.
+- [x] Web and future mobile clients share the same versioned API contract.
+- [x] UC-301, UC-302, and UC-304 acceptance tests pass with real PostgreSQL and Redis.
+- [x] Documentation and UI recommendations are reviewed.
 
 ## Work Log
 
@@ -99,6 +100,28 @@ Create the secure, reusable storage layer that future web and mobile registratio
 - Marked Milestone 2 ready for stakeholder review; final acceptance remains with the project owner.
 - Project owner reviewed the database visually and accepted Milestone 2 for GitHub publication.
 
+### August 15, 2026
+
+- Merged Milestone 2 pull request #3 into `main` after all GitHub checks passed.
+- Project owner approved the Milestone 3 registration and verification scope.
+- Confirmed that existing signup and phone OTP wireframes remain the visual baseline.
+- Received permission to recommend UI improvements, while retaining owner approval before any visual implementation.
+- Started Milestone 3 on branch `codex/milestone-3-registration`.
+- Added shared email/password and phone registration controls behind FastAPI endpoints.
+- Added Argon2id password hashing, HIBP k-anonymity checks, local CAPTCHA enforcement, and safe public responses.
+- Added hashed 15-minute email verification links with safe resend and single-use database consumption.
+- Added hashed three-minute phone OTPs with per-phone rate limits, three-attempt limits, and atomic Redis replay protection.
+- Added local Mailpit delivery for verification emails and simulated SMS without requiring paid credentials.
+- Added a unique active-phone database constraint and migration `0005_registration_constraints`.
+- Added unit, API contract, PostgreSQL, Redis, migration, replay, and provider-failure coverage.
+- Documented the delivered workflow and proposed UI improvements without changing approved wireframes.
+- Passed 12 fast API tests and 9 real PostgreSQL/Redis integration tests.
+- Rebuilt the complete Docker stack and confirmed all services are healthy.
+- Completed a live email signup, opened its Mailpit message, activated the account, and proved link replay is rejected.
+- Passed Python lint/type checks, web tests/lint/type/build, Go tests/vet, documentation validation, OpenAPI parsing, migration drift checks, Compose validation, and production dependency audit.
+- Marked Milestone 3 ready for stakeholder review; final acceptance remains with the project owner.
+- Project owner reviewed the plain-language delivery summary and accepted Milestone 3 for GitHub publication.
+
 ## Decisions
 
 | Decision | Reason |
@@ -110,8 +133,8 @@ Create the secure, reusable storage layer that future web and mobile registratio
 
 ## Current Blockers or Owner Actions
 
-There are no technical blockers or owner actions for Milestone 2. No cloud credentials were needed.
+There are no technical blockers or owner actions for Milestone 3. No paid provider credentials were needed.
 
 ## Next Planned Milestone
 
-After the data foundation is accepted, Milestone 3 will implement account registration and contact verification using the shared storage layer.
+After registration and verification are accepted, Milestone 4 will implement password, phone OTP, and social sign-in with adaptive risk evaluation.

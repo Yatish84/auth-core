@@ -55,6 +55,7 @@ This human-readable contract defines the intended API surface. During implementa
 | POST | `/auth/signup` | UC-301 | Create pending email/password account and send verification. |
 | POST | `/auth/signup/phone` | UC-304 | Start phone registration after CAPTCHA/rate limits. |
 | POST | `/auth/verify/email` | UC-302 | Consume email-verification token and activate account. |
+| POST | `/auth/verify/email/request` | UC-302 | Safely request a replacement verification email. |
 | POST | `/auth/verify/phone/request` | UC-304 | Send or resend phone verification OTP. |
 | POST | `/auth/verify/phone/confirm` | UC-304 | Confirm phone OTP. |
 

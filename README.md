@@ -143,6 +143,8 @@ make migration-check
 make test-integration
 ```
 
+Registration emails and locally simulated SMS messages can be viewed at `http://localhost:8025`. Local registration requests use the CAPTCHA token `local-development-pass`; this value is never a production credential.
+
 Progress is recorded in [the project progress tracker](./docs/delivery/project_progress.md).
 
 ## Security Notice

@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Vittavaan Auth-Core API
-  version: 0.1.0
-  description: Initial machine-readable contract for the project foundation.
+  version: 0.2.0
+  description: Shared machine-readable contract for web and future mobile clients.
 servers:
   - url: http://localhost:8000
     description: Local development
@@ -11,53 +11,205 @@ paths:
     get:
       operationId: getLiveness
       tags: [health]
-      summary: Confirm that the API process is running.
       responses:
         "200":
-          description: The API process is alive.
+          description: API process is alive.
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
+              schema: {$ref: "#/components/schemas/HealthResponse"}
   /health/ready:
     get:
       operationId: getReadiness
       tags: [health]
-      summary: Confirm that the API can reach required services.
       responses:
         "200":
           description: Required services are available.
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
+              schema: {$ref: "#/components/schemas/HealthResponse"}
         "503":
-          description: At least one required service is unavailable.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
+          description: A required service is unavailable.
+  /api/v1/auth/signup:
+    post:
+      operationId: registerEmail
+      tags: [registration]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/EmailSignupRequest"}
+      responses:
+        "201": {$ref: "#/components/responses/Accepted"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+        "503": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/signup/phone:
+    post:
+      operationId: registerPhone
+      tags: [registration]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PhoneSignupRequest"}
+      responses:
+        "201": {$ref: "#/components/responses/Accepted"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+        "503": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/verify/email:
+    post:
+      operationId: verifyEmail
+      tags: [registration]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/EmailVerificationRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/Verified"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/verify/email/request:
+    post:
+      operationId: requestEmailVerification
+      tags: [registration]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/EmailVerificationResendRequest"}
+      responses:
+        "202": {$ref: "#/components/responses/Accepted"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/verify/phone/request:
+    post:
+      operationId: requestPhoneVerification
+      tags: [registration]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PhoneVerificationRequest"}
+      responses:
+        "202": {$ref: "#/components/responses/Accepted"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/verify/phone/confirm:
+    post:
+      operationId: confirmPhoneVerification
+      tags: [registration]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PhoneVerificationConfirmRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/Verified"}
+        "400": {$ref: "#/components/responses/Problem"}
 components:
+  responses:
+    Accepted:
+      description: Request accepted without exposing account existence.
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/AcceptedResponse"}
+    Verified:
+      description: Contact ownership verified.
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/VerifiedResponse"}
+    Problem:
+      description: RFC 7807 problem response.
+      content:
+        application/problem+json:
+          schema: {$ref: "#/components/schemas/ProblemResponse"}
   schemas:
+    EmailSignupRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password, given_name, family_name, captcha_token]
+      properties:
+        email: {type: string, format: email, maxLength: 320}
+        password: {type: string, minLength: 12, maxLength: 128, writeOnly: true}
+        given_name: {type: string, minLength: 1, maxLength: 120}
+        family_name: {type: string, minLength: 1, maxLength: 120}
+        captcha_token: {type: string, minLength: 1, maxLength: 2048, writeOnly: true}
+    EmailVerificationRequest:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+    EmailVerificationResendRequest:
+      type: object
+      additionalProperties: false
+      required: [email, captcha_token]
+      properties:
+        email: {type: string, format: email}
+        captcha_token: {type: string, writeOnly: true}
+    PhoneSignupRequest:
+      type: object
+      additionalProperties: false
+      required: [phone, captcha_token]
+      properties:
+        phone: {type: string, minLength: 8, maxLength: 32}
+        given_name: {type: [string, "null"], minLength: 1, maxLength: 120}
+        family_name: {type: [string, "null"], minLength: 1, maxLength: 120}
+        captcha_token: {type: string, writeOnly: true}
+    PhoneVerificationRequest:
+      type: object
+      additionalProperties: false
+      required: [phone, captcha_token]
+      properties:
+        phone: {type: string, minLength: 8, maxLength: 32}
+        captcha_token: {type: string, writeOnly: true}
+    PhoneVerificationConfirmRequest:
+      type: object
+      additionalProperties: false
+      required: [phone, code, captcha_token]
+      properties:
+        phone: {type: string, minLength: 8, maxLength: 32}
+        code: {type: string, pattern: "^[0-9]{6}$", writeOnly: true}
+        captcha_token: {type: string, writeOnly: true}
+    AcceptedResponse:
+      type: object
+      additionalProperties: false
+      required: [status, message]
+      properties:
+        status: {type: string, const: accepted}
+        message: {type: string}
+    VerifiedResponse:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: {type: string, const: verified}
+    ProblemResponse:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, detail, instance, code, request_id]
+      properties:
+        type: {type: string, format: uri}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        instance: {type: string}
+        code: {type: string}
+        request_id: {type: string, format: uuid}
     ComponentHealth:
       type: object
       additionalProperties: false
       required: [status]
       properties:
-        status:
-          type: string
-          enum: [up, down]
+        status: {type: string, enum: [up, down]}
     HealthResponse:
       type: object
       additionalProperties: false
       required: [service, status]
       properties:
-        service:
-          type: string
-        status:
-          type: string
-          enum: [up, ready, not_ready]
+        service: {type: string}
+        status: {type: string, enum: [up, ready, not_ready]}
         components:
           type: object
-          additionalProperties:
-            $ref: "#/components/schemas/ComponentHealth"
+          additionalProperties: {$ref: "#/components/schemas/ComponentHealth"}

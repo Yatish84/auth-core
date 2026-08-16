@@ -9,7 +9,7 @@ This matrix ensures every source use case receives a boundary, control, persiste
 | UC-103, UC-105 | Phone OTP and fallback | `/auth/login/phone/*`, fallback | `LoginControl` | OTP/rate keys, identities | Phone entry, OTP, fallback chooser | Expiry, attempts, pumping controls |
 | UC-104 | Passkey login | `/auth/passkeys/*` | `MFAControl` | credentials, challenge keys | Passkey prompt | Origin/RP/challenge/signature checks |
 | UC-201, UC-202, UC-203, UC-204 | MFA and enrollment | `/auth/mfa/*` | `MFAControl` | devices, encrypted secrets, challenges | Verify/setup/manage factors | Attempt lock, backup, last-factor guard |
-| UC-301, UC-302 | Email registration | `/auth/signup`, `/auth/verify/email` | `RegistrationControl` | users, identities, ephemeral tokens | Signup, verification status | CAPTCHA, HIBP, single-use activation |
+| UC-301, UC-302 | Email registration | `/auth/signup`, `/auth/verify/email`, `/auth/verify/email/request` | `RegistrationControl` | users, identities, ephemeral tokens | Signup, verification status | CAPTCHA, HIBP, single-use activation and safe resend |
 | UC-304 | Phone registration | `/auth/signup/phone`, verify phone | `RegistrationControl` | users, phone identity, OTP keys | Phone signup and OTP | E.164, rate limit, uniqueness |
 | UC-305 | Organizations/invitations | `/organizations*` | `OrganizationControl` | orgs, invitations, bindings | Org create/invite/accept | Authorization, expiry, idempotency |
 | UC-306 | Context switching | `/auth/org/switch` | `OrganizationControl` | bindings, sessions | Organization switcher | Membership and scoped claims |

@@ -44,6 +44,12 @@ class User(TimestampMixin, Base):
             unique=True,
             postgresql_where=text("anonymized_at IS NULL"),
         ),
+        Index(
+            "uq_users_phone_active",
+            "phone_e164",
+            unique=True,
+            postgresql_where=text("phone_e164 IS NOT NULL AND anonymized_at IS NULL"),
+        ),
     )
 
     user_id: Mapped[UUID] = uuid_primary_key()
