@@ -134,7 +134,8 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 | Full repository checks | Ran Python lint/type, web test/lint/type/build, Go test/vet, documentation, Compose, OpenAPI, and formatting checks. | Confirms Milestone 8 did not break another service or document set. | Passed |
 | Live API smoke test | Rebuilt the Docker API, confirmed PostgreSQL/Redis readiness, and received the generic HTTP 202 response for an unknown recovery email. | Proves the running service behaves safely, not just isolated tests. | Passed |
 | UI boundary | Confirmed no frontend screen or wireframe was created or changed. | Preserves the project owner's design-approval requirement. | Passed |
-| Owner review | Milestone delivery is ready for project-owner review. | Final acceptance remains with the project owner. | Awaiting review |
+| GitHub CI | Passed all 6 protected pull-request checks before merge. | Provides an independent automated merge gate. | Passed |
+| Owner review | Reviewed and approved Milestone 8; no frontend screen was created or changed. | Confirms the recovery and administration delivery is accepted while respecting the UI approval rule. | Accepted |
 
 ## Maintenance Rule
 

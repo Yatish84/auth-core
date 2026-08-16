@@ -2,7 +2,7 @@
 
 Central authentication, session, organization-access, and user-management engine for the Vittavaan web platform and future mobile application.
 
-> **Current phase:** Milestone 7 personal and organization workspaces are complete on `main`. Milestone 8 recovery and controlled administration is now in progress.
+> **Current phase:** Milestone 8 recovery and controlled administration is complete on `main`. Milestone 9 privacy and auditing is now in progress.
 
 ## In Plain Language
 
