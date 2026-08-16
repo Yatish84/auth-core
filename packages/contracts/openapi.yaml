@@ -799,6 +799,28 @@ paths:
         "200": {$ref: "#/components/responses/GovernedReset"}
         "403": {$ref: "#/components/responses/Problem"}
         "409": {$ref: "#/components/responses/Problem"}
+  /api/v1/admin/audit-logs:
+    get:
+      operationId: searchAuditLogs
+      tags: [privacy and auditing]
+      security: [{bearerAuth: []}]
+      parameters:
+        - {in: query, name: subject_user_id, schema: {type: string, format: uuid}}
+        - {in: query, name: event_type, schema: {type: string, minLength: 1, maxLength: 120}}
+        - {in: query, name: outcome, schema: {type: string, enum: [success, failure, denied]}}
+        - {in: query, name: occurred_from, schema: {type: string, format: date-time}}
+        - {in: query, name: occurred_to, schema: {type: string, format: date-time}}
+        - {in: query, name: cursor, schema: {type: string, minLength: 8, maxLength: 256}}
+        - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+      responses:
+        "200":
+          description: Authorized, redacted, cursor-paginated audit history.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AuditPageResponse"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
   /.well-known/jwks.json:
     get:
       operationId: getSigningKeys
@@ -988,6 +1010,33 @@ components:
         approved_at: {type: [string, "null"], format: date-time}
         executed_at: {type: [string, "null"], format: date-time}
         ticket_reference: {type: [string, "null"]}
+    AuditRecord:
+      type: object
+      additionalProperties: false
+      required: [audit_id, actor_user_id, subject_user_id, org_id, event_type, outcome, correlation_id, metadata, occurred_at]
+      properties:
+        audit_id: {type: string, format: uuid}
+        actor_user_id: {type: [string, "null"], format: uuid}
+        subject_user_id: {type: [string, "null"], format: uuid}
+        org_id: {type: [string, "null"], format: uuid}
+        event_type: {type: string, maxLength: 120}
+        outcome: {type: string, enum: [success, failure, denied]}
+        correlation_id: {type: string, format: uuid}
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Privacy-redacted event context; secrets and unnecessary PII are never returned.
+        occurred_at: {type: string, format: date-time}
+    AuditPageResponse:
+      type: object
+      additionalProperties: false
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items: {$ref: "#/components/schemas/AuditRecord"}
+        next_cursor: {type: [string, "null"]}
     EmailSignupRequest:
       type: object
       additionalProperties: false

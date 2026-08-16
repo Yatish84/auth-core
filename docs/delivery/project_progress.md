@@ -42,22 +42,22 @@ Give users controlled access to their personal data and safe account erasure whi
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Audit-query foundation | Define authorized, paginated, redacted audit searches without weakening immutable audit storage. | In progress |
-| Authorized audit search | Let approved security auditors filter and review relevant audit evidence for UC-505. | Not started |
-| Audit privacy controls | Redact unnecessary sensitive values and prevent access outside the reviewer's permitted scope. | Not started |
+| Audit-query foundation | Define authorized, paginated, redacted audit searches without weakening immutable audit storage. | Implemented |
+| Authorized audit search | Let approved security auditors filter and review relevant audit evidence for UC-505. | Implemented |
+| Audit privacy controls | Redact unnecessary sensitive values and prevent access outside the reviewer's permitted scope. | Implemented |
 | Data-export request | Let a reauthenticated user request a machine-readable copy of their stored personal data for UC-601. | Not started |
 | Protected export artifact | Assemble, encrypt, authorize, expire, and safely download the user's export. | Not started |
 | Account-erasure request | Let a reauthenticated user request erasure with clear warnings and track its progress for UC-602. | Not started |
 | Anonymization and access removal | Revoke access, remove or irreversibly anonymize personal data, and preserve only lawful pseudonymous evidence. | Not started |
 | Retention and backup expiry | Enforce configurable retention and document the approved operational path for expiring backup copies. | Not started |
-| Tests and documentation | Prove audit authorization, export isolation, artifact expiry, erasure safety, replay protection, and retention behavior. | Not started |
+| Tests and documentation | Prove audit authorization, export isolation, artifact expiry, erasure safety, replay protection, and retention behavior. | In progress |
 | UI boundary | Document proposed privacy and audit screens without creating or changing frontend visuals until approved. | Not started |
 
 ### Completion Checklist
 
-- [ ] Only authorized security reviewers can search audit evidence.
-- [ ] Audit results are paginated, filtered safely, and redact unnecessary sensitive values.
-- [ ] Audit records remain append-only and cannot be changed through the application.
+- [x] Only authorized security reviewers can search audit evidence.
+- [x] Audit results are paginated, filtered safely, and redact unnecessary sensitive values.
+- [x] Audit records remain append-only and cannot be changed through the application.
 - [ ] A user must recently reauthenticate before requesting an export or erasure.
 - [ ] A user's export contains only their own permitted data in a machine-readable format.
 - [ ] Export artifacts are encrypted, access-controlled, short-lived, and unavailable after expiry.
@@ -508,6 +508,12 @@ Help users safely regain account access while ensuring that powerful support act
 - Merged pull request #9 into `main` with merge commit `4d751e872cf2319dd39182f5a215fa705e523fa7`.
 - Preserved the complete Milestone 8 goal, work items, and completion checklist in the permanent archive.
 - Started Milestone 9 privacy and auditing planning on branch `codex/milestone-9-privacy-audit`.
+- Added UC-505 audit search with recent-MFA enforcement and database-backed `SECURITY_SUPERVISOR_L3` authorization.
+- Added subject, event, outcome, time-range, and opaque cursor filters with a maximum page size of 100 records.
+- Added recursive sensitive-metadata redaction and an immutable `AUDIT_LOGS_QUERIED` event for every successful review.
+- Added migration `0010_audit_query_access` so PostgreSQL independently permits approved cross-user audit review while retaining user and organization isolation.
+- Expanded the shared web/mobile OpenAPI contract from 55 to 56 paths without creating or changing frontend screens.
+- Passed 6 focused Python tests and 1 real PostgreSQL row-isolation test plus focused lint, type, and OpenAPI checks.
 
 ## Decisions
 

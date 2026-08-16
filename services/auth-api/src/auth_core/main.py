@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse, Response
 from auth_core.boundary.http.health import router as health_router
 from auth_core.boundary.http.login import router as login_router
 from auth_core.boundary.http.mfa import router as mfa_router
+from auth_core.boundary.http.privacy import router as privacy_router
 from auth_core.boundary.http.recovery import router as recovery_router
 from auth_core.boundary.http.registration import router as registration_router
 from auth_core.boundary.http.session import jwks_router
@@ -57,6 +58,7 @@ app.include_router(session_router)
 app.include_router(jwks_router)
 app.include_router(workspace_router)
 app.include_router(recovery_router)
+app.include_router(privacy_router)
 
 
 @app.middleware("http")

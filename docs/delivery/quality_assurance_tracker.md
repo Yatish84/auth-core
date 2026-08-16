@@ -137,6 +137,18 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 | GitHub CI | Passed all 6 protected pull-request checks before merge. | Provides an independent automated merge gate. | Passed |
 | Owner review | Reviewed and approved Milestone 8; no frontend screen was created or changed. | Confirms the recovery and administration delivery is accepted while respecting the UI approval rule. | Accepted |
 
+## Milestone 9 - Privacy and Auditing
+
+| QA area | Check performed | Why it matters | Result |
+|---|---|---|---|
+| Focused audit tests | Ran 6 control and HTTP tests for MFA, staff authorization, redaction, pagination cursors, successful responses, and RFC 7807 denial. | Proves UC-505 behavior before broader privacy workflows are added. | Passed |
+| Real database isolation | Ran 1 PostgreSQL integration test under the restricted `auth_app` role. | Proves an ordinary user cannot read another user's audit evidence while an active L3 security supervisor can. | Passed |
+| Database migration | Created a fresh migrated test database through migration `0010_audit_query_access`. | Proves the security function and row-level policy install successfully from an empty database. | Passed |
+| Focused code quality | Ran Ruff and MyPy against the new privacy and audit modules. | Catches formatting, unsafe typing, and interface mistakes in the changed scope. | Passed |
+| Shared API contract | Parsed the shared OpenAPI contract with 56 paths. | Keeps the website and future mobile app aligned to the same audit service. | Passed |
+| UI boundary | Confirmed no frontend screen or wireframe was created or changed. | Preserves the project owner's design-approval requirement. | Passed |
+| Owner review | Audit-query increment is ready for project-owner review. | Final Milestone 9 acceptance remains pending until export, erasure, and retention work is complete. | In progress |
+
 ## Maintenance Rule
 
 For every milestone, this file must be updated before merge with:
