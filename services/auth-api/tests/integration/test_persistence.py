@@ -23,8 +23,8 @@ async def test_empty_database_upgrades_to_complete_schema(migrated_database_url:
                 )
             )
             revision = await connection.scalar(text("SELECT version_num FROM alembic_version"))
-        assert table_count == 20
-        assert revision == "0008_workspaces_and_referrals"
+        assert table_count == 22
+        assert revision == "0009_recovery_governance"
     finally:
         await engine.dispose()
 

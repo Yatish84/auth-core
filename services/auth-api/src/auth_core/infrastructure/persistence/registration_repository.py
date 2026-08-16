@@ -11,6 +11,7 @@ from auth_core.infrastructure.persistence.models import (
     AuditLog,
     EphemeralToken,
     Identity,
+    PasswordHistory,
     Referral,
     User,
     personal_workspace_for,
@@ -67,12 +68,18 @@ class SqlAlchemyRegistrationRepository:
                     normalize_email(email),
                     user.user_id,
                 )
+                identity = Identity(
+                    user_id=user.user_id,
+                    provider="password",
+                    provider_subject=normalize_email(email),
+                    password_hash=password_hash,
+                )
+                session.add(identity)
+                await session.flush()
                 session.add_all(
                     [
-                        Identity(
-                            user_id=user.user_id,
-                            provider="password",
-                            provider_subject=normalize_email(email),
+                        PasswordHistory(
+                            identity_id=identity.identity_id,
                             password_hash=password_hash,
                         ),
                         EphemeralToken(

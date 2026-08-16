@@ -32,7 +32,9 @@ This document defines the target schema semantics. Alembic migrations, not manua
 | `auth.referrals` | referrer, invitee email, token hash, referred user, invitation/registration/verification state and timestamps |
 | `auth.role_permission_catalog` | module, role, permission, version, active state |
 | `auth.user_role_bindings` | user, org, module, role, grantor, active/revoked times |
-| `auth.governed_requests` | type, target, initiator, approver, state, execute-after, ticket, result |
+| `auth.staff_role_bindings` | user, approved global support/security role, grantor, active/revoked times |
+| `auth.contact_change_requests` | user, old/new contact, hashed proof codes, proof, expiry, and application times |
+| `auth.governed_requests` | type, target/version, initiator, approver, approval/execution times, state, execute-after, ticket, result |
 | `auth.gdpr_requests` | user, type, state, request/completion, artifact/expiry, failure code |
 | `auth.audit_logs` | actor/subject/org, event/outcome, network, correlation, redacted metadata, hash linkage |
 | `auth.outbox_events` | type, aggregate, payload, idempotency, availability, attempts, processing state |
@@ -52,6 +54,11 @@ This document defines the target schema semantics. Alembic migrations, not manua
 10. Indexes support active-session, unexpired-token, tenant-membership, outbox, and audit cursor queries.
 11. Each non-anonymized user has at most one personal workspace, and personal workspaces require an owner.
 12. Each created account can be attributed to at most one referral; referral tokens are hashed, expiring, and never grant portfolio access.
+13. Staff authority comes from active database bindings, never from a role supplied in an API request.
+14. Contact changes apply only after hashed proof codes for both old and new channels are verified.
+15. Governed MFA resets preserve the target account version and cancel safely if the account changes before approval or execution.
+16. The application database role can read staff bindings for authorization but cannot insert, update, or delete them.
+17. Contact-change rows enforce PostgreSQL row-level isolation by the verified current user.
 
 ## Row-Level Security
 

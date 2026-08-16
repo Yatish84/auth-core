@@ -131,9 +131,14 @@ sequenceDiagram
     AdminCtrl-->>AdminBoundary: Request Created (Status: PENDING_APPROVAL)
     AdminBoundary-->>L2Agent: HTTP 202 Accepted (Pending L3 Approval)
 
-    L3Supervisor->>AdminBoundary: POST /api/v1/admin/mfa-reset/approve (requestID)
+    L3Supervisor->>AdminBoundary: POST /api/v1/admin/mfa-resets/{id}/approve
     AdminBoundary->>AdminCtrl: approveSupportReset(supervisorID, requestID)
-    Note over AdminCtrl: Verifies 12-Hour Cooldown Delay Window Elapsed
+    AdminCtrl->>Audit: recordEvent("ADMIN_MFA_RESET_APPROVED")
+    AdminCtrl-->>AdminBoundary: Approved; execution remains delayed
+    Note over AdminCtrl: Mandatory 12-hour protection delay elapses
+    L3Supervisor->>AdminBoundary: POST /api/v1/admin/mfa-resets/{id}/execute
+    AdminBoundary->>AdminCtrl: executeSupportReset(supervisorID, requestID)
+    Note over AdminCtrl: Revalidate roles, distinct actors, target version, state, and delay
     AdminCtrl->>MFADev: revokeDevice(targetUserID)
     AdminCtrl->>Session: revokeAllSessions(targetUserID)
     AdminCtrl->>Audit: recordEvent("ADMIN_MFA_RESET_EXECUTED")

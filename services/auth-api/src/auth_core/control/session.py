@@ -261,6 +261,14 @@ class SessionControl:
         for access_jti in access_jtis:
             await self._redis.revoke_access_token(access_jti, ACCESS_TTL_SECONDS)
 
+    async def revoke_user_access(self, user_id: UUID, reason: str) -> int:
+        now = datetime.now(UTC)
+        results = await self._repository.revoke_all(user_id, reason, now)
+        await self._redis.revoke_user(user_id, now)
+        for item in results:
+            await self._apply_revocation(item, now)
+        return len(results)
+
     async def restore_organization_access(
         self, user_id: UUID, workspace_id: UUID
     ) -> None:

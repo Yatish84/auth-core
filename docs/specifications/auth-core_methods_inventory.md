@@ -45,12 +45,12 @@
 | `MFAControl` | `issue_challenge`, `verify_code`, `resend`, `setup_totp`, `register_passkey`, `remove_factor` | Challenge state, factor policy, attempt limits, assurance. |
 | `SessionControl` | `issue`, `list`, `revoke`, `revoke_all`, `enforce_cap` | Token family, session metadata, revocation, audit. |
 | `TokenRefreshControl` | `rotate` | Atomic generation lookup, device binding, replay response, new token pair. |
-| `RecoveryControl` | `request_password_reset`, `reset_password`, `change_contact`, `support_recovery` | Generic responses, single-use tokens, reauthentication, session revocation. |
+| `RecoveryControl` | `request_password_reset`, `reset_password`, `start_contact_change`, `verify_contact_change` | Generic responses, single-use tokens, dual-channel proof, breach/history policy, session revocation. |
 | `OrganizationControl` | `create`, `invite`, `accept_invitation`, `switch_context`, `offboard` | Membership, role policy, scoped tokens, tenant revocation. |
 | `WorkspaceControl` | `ensure_personal`, `list`, `switch_context` | Exactly one private personal context plus authorized organizations. |
 | `ReferralControl` | `invite`, `list_status` | Rate limits, token hashing, safe delivery, masked status, no reward calculation. |
 | `RoleControl` | `list_catalog`, `replace_member_roles` | Admin authorization and catalog validation. |
-| `SupportAdminControl` | `unlock`, `suspend`, `initiate_mfa_reset`, `approve_mfa_reset`, `execute_mfa_reset` | Staff roles, four-eyes rule, cooldown, notifications, session termination. |
+| `SupportAdminControl` | `unlock`, `suspend`, `support_recovery`, `initiate_mfa_reset`, `approve_mfa_reset`, `get_mfa_reset`, `execute_mfa_reset` | Database-backed staff roles, recent MFA, four-eyes rule, delay, notifications, session termination. |
 | `AuditQueryControl` | `search`, `export` | Filter authorization, pagination, redaction, audit of audit access. |
 | `GDPRControl` | `request_export`, `build_export`, `request_erasure`, `execute_erasure` | Reauthentication, data collection, artifact protection, anonymization. |
 | `KeyControl` | `publish_jwks`, `rotate_signing_key` | Key lifecycle and overlap windows. |
@@ -72,6 +72,7 @@
 | `OrganizationRepository` | Organizations, invitations, membership, and role bindings. |
 | `WorkspaceRepository` | Personal ownership, authorized workspace listing, and referral attribution. |
 | `GovernanceRepository` | Governed request locking and state transitions. |
+| `RecoveryRepository` | Reset-token consumption, password history, contact proof, account state, staff roles, and governed MFA resets. |
 | `AuditRepository` | Append and authorized cursor search only. |
 | `OutboxRepository` | Append, claim, retry, complete, dead-letter. |
 | `RedisSecurityStore` | Challenges, OTPs, locks, rate limits, risk cache, revocation timestamps. |

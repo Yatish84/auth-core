@@ -292,6 +292,13 @@ Canonical RBAC permissions registry across Vittavaan modules.
 * **Methods:**
   * `assignRole()`, `revokeRole()`
 
+Staff support authority is stored separately in `StaffRoleBinding` so organization roles cannot accidentally grant platform-wide administrative access. Its approved values are `SUPPORT_AGENT_L2`, `SECURITY_SUPERVISOR_L3`, and `ACCOUNT_ADMIN`; API request bodies never supply or override the acting staff role.
+
+#### 5.1.9A Object: `ContactChangeRequest` & `GovernedRequest`
+* `ContactChangeRequest` stores only hashed old/new proof codes, a ten-minute expiry, proof timestamps, and the final application time.
+* `GovernedRequest` stores the target account version, separate initiator and approver, 12-hour execute-after time, approval/execution timestamps, ticket reference, and safe state.
+* A governed action revalidates staff authority, actor separation, target version, request state, and delay at every transition.
+
 #### 5.1.10 Object: `GDPRRequest`
 Tracks regulatory privacy requests.
 * **Properties:**
@@ -342,7 +349,8 @@ Coordinates token family extension, device fingerprint validation, and revokes t
 
 #### 5.3.4 Object: `SupportAdminControl` (4-Eyes Governed)
 * **`initiateSupportMFAReset(agentID: UUID, targetUserID: UUID, ticketRef: String)`**: Creates pending reset request and notifies user out-of-band.
-* **`approveSupportMFAReset(supervisorID: UUID, requestID: UUID)`**: Enforces dual approval from `SECURITY_SUPERVISOR_L3`, checks 12-hour cooldown delay, revokes `MFADevice`, terminates active sessions, and logs audit event.
+* **`approveSupportMFAReset(supervisorID: UUID, requestID: UUID)`**: Records approval from a distinct `SECURITY_SUPERVISOR_L3` after revalidating the target state.
+* **`executeSupportMFAReset(supervisorID: UUID, requestID: UUID)`**: After the 12-hour delay, revalidates every condition, revokes MFA devices and sessions, notifies the user, and records immutable audit evidence.
 
 #### 5.3.5 Object: `OrganizationControl`
 Manages multi-tenant organization creation, invitation acceptance, member offboarding (`UC-308`), and issues tenant-scoped JWTs during `UC-306 (Organization Context Switch)`.

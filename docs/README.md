@@ -54,6 +54,7 @@ No document in this review set represents a production certification. Security, 
 - [Delivered MFA and Passkey Foundation](./architecture/mfa_and_passkey_foundation.md) - Plain-language second-factor, encrypted-secret, backup-code, and WebAuthn behavior.
 - [Delivered Session and Token Foundation](./architecture/session_and_token_foundation.md) - Plain-language token issuance, rotation, revocation, browser/mobile delivery, and Go verification behavior.
 - [Delivered Workspace, Organization, and Referral Foundation](./architecture/workspace_and_referral_foundation.md) - Plain-language personal portfolios, organizations, referrals, roles, switching, and offboarding.
+- [Delivered Recovery and Governance Foundation](./architecture/recovery_and_governance_foundation.md) - Plain-language password recovery, contact changes, staff actions, and four-eyes MFA reset behavior.
 - [Security Architecture](./architecture/security_architecture.md) - Threat boundaries, controls, token security, and governance.
 - [Client Reuse Strategy](./architecture/client_reuse_strategy.md) - Web-first delivery with future Expo mobile reuse.
 - [Deployment Architecture](./architecture/deployment_architecture.md) - Local, free staging, and AWS production designs.

@@ -12,6 +12,7 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 |---|---|
 | Passed | The check completed successfully. |
 | Accepted | The project owner reviewed and approved the milestone. |
+| Awaiting review | Technical checks passed; final project-owner acceptance is still pending. |
 | Not applicable | The check was not required for that milestone. |
 
 ## Milestone Summary
@@ -26,6 +27,7 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 | 5. Extra security | 40 fast tests, 14 database/Redis tests, MFA/passkey security, Docker health, and full repository checks | Accepted |
 | 6. Sessions | 46 fast tests, 18 database/Redis tests, live token rotation/replay, Go verification, and six GitHub checks | Accepted |
 | 7. Workspaces | 55 fast tests, 22 database/Redis tests, isolation/revocation scenarios, migrations, and full repository checks | Accepted |
+| 8. Recovery and administration | 68 fast tests, 26 database/Redis tests, recovery/governance abuse scenarios, migrations, and full repository checks | Awaiting owner review |
 
 ## Milestone 0 - Documentation
 
@@ -114,9 +116,25 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 | Token/offboarding | Tested scoped-token replacement and immediate organization access revocation while preserving unrelated access. | Ensures removing a member blocks only the intended organization access. | Passed |
 | Database migrations | Ran downgrade/upgrade checks and confirmed zero schema drift. | Proves the workspace schema can be deployed consistently and remains aligned with code. | Passed |
 | Full repository checks | Ran Python lint/type, web test/lint/type/build, Go test/vet, documentation, OpenAPI parsing, and Compose validation. | Confirms Milestone 7 did not break another service or shared contract. | Passed |
+| GitHub CI | Passed all 6 protected pull-request checks before merge. | Provides an independent automated merge gate. | Passed |
 | Owner review | Reviewed and approved Milestone 7; no frontend screen was created or changed. | Confirms the backend and documentation are accepted while respecting the UI approval rule. | Accepted |
 
-GitHub pull-request checks are added to this section after the Milestone 7 merge gate completes.
+## Milestone 8 - Recovery and Controlled Administration
+
+| QA area | Check performed | Why it matters | Result |
+|---|---|---|---|
+| Fast tests | Ran 68 Python API and security tests. | Checks generic recovery responses, password rules, contact proofs, staff authorization, support recovery, suspension, and governed-reset controls. | Passed |
+| Real storage tests | Ran 26 PostgreSQL and Redis integration tests. | Proves single-use token state, recent-password history, contact isolation/application, read-only staff bindings, governed locking, and MFA revocation against real services. | Passed |
+| Password abuse | Tested unknown accounts, token hashing, token replay, recent-password reuse, breached-password rejection, and session revocation. | Prevents account discovery and reuse of stolen links, passwords, or sessions. | Passed |
+| Contact-change security | Tested recent-MFA enforcement and separate old/new proof before applying a contact. | Prevents an attacker controlling only one channel from replacing account contacts. | Passed |
+| Staff authorization | Tested database-backed roles, missing-role denial, ticket requirements, suspension revocation, and support recovery. | Prevents request data or organization roles from granting platform-wide staff power. | Passed |
+| Four-eyes governance | Tested distinct actors, L2/L3 roles, target-version checks, early-execution denial, 12-hour delay, execution, notification, and factor revocation. | Prevents one support worker from silently removing a user's MFA protection. | Passed |
+| Database migrations | Ran empty-database upgrade, downgrade/upgrade rehearsal, 22-table assertion, and zero schema-drift check. | Proves recovery tables can be deployed consistently and rolled back safely in development. | Passed |
+| Shared API contract | Parsed 55 shared OpenAPI paths with 56 unique operations and confirmed the live FastAPI exposes the same 55 paths. | Keeps the web client and future mobile app aligned to one reusable service contract. | Passed |
+| Full repository checks | Ran Python lint/type, web test/lint/type/build, Go test/vet, documentation, Compose, OpenAPI, and formatting checks. | Confirms Milestone 8 did not break another service or document set. | Passed |
+| Live API smoke test | Rebuilt the Docker API, confirmed PostgreSQL/Redis readiness, and received the generic HTTP 202 response for an unknown recovery email. | Proves the running service behaves safely, not just isolated tests. | Passed |
+| UI boundary | Confirmed no frontend screen or wireframe was created or changed. | Preserves the project owner's design-approval requirement. | Passed |
+| Owner review | Milestone delivery is ready for project-owner review. | Final acceptance remains with the project owner. | Awaiting review |
 
 ## Maintenance Rule
 
