@@ -546,6 +546,7 @@ class GDPRRequest(Base):
             name="state_valid",
         ),
         Index("ix_gdpr_requests_user_state", "user_id", "state"),
+        UniqueConstraint("user_id", "request_type", "idempotency_key_hash"),
     )
 
     gdpr_request_id: Mapped[UUID] = uuid_primary_key()
@@ -561,6 +562,29 @@ class GDPRRequest(Base):
     artifact_reference: Mapped[str | None] = mapped_column(Text)
     artifact_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     failure_code: Mapped[str | None] = mapped_column(String(80))
+    idempotency_key_hash: Mapped[str | None] = mapped_column(String(128))
+    backup_purge_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class PrivacyExportArtifact(Base):
+    __tablename__ = "privacy_export_artifacts"
+    __table_args__ = (Index("ix_privacy_export_artifacts_expiry", "expires_at"),)
+
+    artifact_id: Mapped[UUID] = uuid_primary_key()
+    gdpr_request_id: Mapped[UUID] = mapped_column(
+        ForeignKey("auth.gdpr_requests.gdpr_request_id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("auth.users.user_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    encrypted_content: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    content_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class AuditLog(Base):

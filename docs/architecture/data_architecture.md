@@ -52,6 +52,7 @@ erDiagram
 | `contact_change_requests` | Dual-channel contact proof | Hashed old/new codes, ten-minute expiry, both proofs before application. |
 | `governed_requests` | Four-eyes and delayed actions | Initiator differs from approver; target version, approval time, and execute-after timestamp. |
 | `gdpr_requests` | Export and erasure lifecycle | State machine, timestamps, artifact reference. |
+| `privacy_export_artifacts` | Encrypted, short-lived personal-data exports | Owner/request-bound ciphertext, digest, expiry, and row isolation. |
 | `audit_logs` | Append-only security history | No update/delete application grants; tamper-evident linkage. |
 | `outbox_events` | Reliable async work | Claimed/attempted status, idempotency key, redacted payload. |
 
@@ -99,4 +100,4 @@ Critical approvals and durable recovery state do not exist only in Redis.
 
 Retention periods are configuration-backed policies requiring legal approval before production. The design separates identity data, security telemetry, audit obligations, and export artifacts so each can have a distinct lawful retention policy.
 
-GDPR erasure disables access, revokes sessions, removes or irreversibly anonymizes PII, preserves legally required pseudonymous audit evidence, and records completion. Backup expiry is handled operationally rather than by mutating immutable snapshots.
+GDPR erasure disables access, revokes sessions, removes or irreversibly anonymizes PII, preserves legally required pseudonymous audit evidence, and records completion plus `backup_purge_due_at`. Backup expiry is handled through monitored AWS lifecycle policies rather than by mutating immutable snapshots from the application.

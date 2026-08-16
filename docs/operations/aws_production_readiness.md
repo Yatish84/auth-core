@@ -30,6 +30,7 @@ This checklist governs the transition from the low-cost demonstration environmen
 ## Data and Cryptography
 
 - RDS PostgreSQL/Aurora multi-AZ, encryption, backups, PITR, maintenance windows, and parameter review.
+- Approved automated-backup and snapshot lifecycle rules expire pre-erasure copies by each request's `backup_purge_due_at` deadline, currently configured for 30 days; alerts report any overdue copy.
 - ElastiCache TLS/auth, subnet isolation, failover, memory and eviction policy review.
 - KMS keys with rotation, separation of signing/encryption purposes, and tightly scoped grants.
 - Secrets Manager rotation and no static credentials in task definitions.
@@ -54,6 +55,7 @@ This checklist governs the transition from the low-cost demonstration environmen
 
 - Business-approved SLOs, RTO, and RPO.
 - Restore tests from backups, not merely backup-success indicators.
+- Erasure restore drills prove expired snapshots are unavailable and any temporarily restored pre-erasure data is isolated, never returned to production, and re-anonymized before use.
 - Database migration rollback/forward-fix rehearsal.
 - Queue replay and idempotency validation.
 - Region and availability-zone failure analysis.

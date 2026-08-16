@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     refresh_token_hmac_secret: str = "local-refresh-token-key-change-me"
     workspace_token_hmac_secret: str = "local-workspace-token-key-change-me"
     recovery_token_hmac_secret: str = "local-recovery-token-key-change-me"
+    privacy_idempotency_hmac_secret: str = "local-privacy-idempotency-key-change-me"
+    privacy_export_ttl_hours: int = 24
+    privacy_backup_purge_days: int = 30
     jwt_issuer: str = "http://localhost:8000"
     jwt_audience: str = "grox-platform"
 
@@ -61,6 +64,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def reject_local_registration_providers_in_production(self) -> "Settings":
+        if self.privacy_export_ttl_hours <= 0 or self.privacy_backup_purge_days <= 0:
+            raise ValueError("Privacy retention periods must be positive")
         if self.app_env == "production" and self.registration_provider_mode == "local":
             raise ValueError("Production cannot use local registration provider adapters")
         if self.app_env == "production" and self.login_provider_mode == "local":

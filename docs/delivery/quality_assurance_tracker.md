@@ -134,7 +134,26 @@ The [Testing Strategy](./testing_strategy.md) defines the overall testing approa
 | Full repository checks | Ran Python lint/type, web test/lint/type/build, Go test/vet, documentation, Compose, OpenAPI, and formatting checks. | Confirms Milestone 8 did not break another service or document set. | Passed |
 | Live API smoke test | Rebuilt the Docker API, confirmed PostgreSQL/Redis readiness, and received the generic HTTP 202 response for an unknown recovery email. | Proves the running service behaves safely, not just isolated tests. | Passed |
 | UI boundary | Confirmed no frontend screen or wireframe was created or changed. | Preserves the project owner's design-approval requirement. | Passed |
-| Owner review | Milestone delivery is ready for project-owner review. | Final acceptance remains with the project owner. | Awaiting review |
+| GitHub CI | Passed all 6 protected pull-request checks before merge. | Provides an independent automated merge gate. | Passed |
+| Owner review | Reviewed and approved Milestone 8; no frontend screen was created or changed. | Confirms the recovery and administration delivery is accepted while respecting the UI approval rule. | Accepted |
+
+## Milestone 9 - Privacy and Auditing
+
+| QA area | Check performed | Why it matters | Result |
+|---|---|---|---|
+| Focused privacy tests | Ran 14 control and HTTP tests for audit authorization, encrypted export, tamper rejection, explicit erasure confirmation, session revocation, and ownership-transfer blocking. | Proves the delivered UC-505, UC-601, and UC-602 control and API behavior. | Passed |
+| Real database isolation | Ran 4 PostgreSQL tests for audit access, owner-only export storage, erasure, evidence retention, and last-owner blocking. | Proves the complete privacy workflow against real constraints and row-level security. | Passed |
+| Database migrations | Created fresh test databases through migrations `0010` to `0012`, with drift and downgrade/re-upgrade rehearsal. | Proves audit, export, erasure-retention, and row-level policies install and reverse safely. | Passed |
+| Export encryption | Confirmed the owner's plaintext email is absent from stored artifact bytes and that owner/request binding plus digest verification rejects tampering. | Prevents database readers or modified ciphertext from silently exposing or changing an export. | Passed |
+| Idempotency and expiry | Confirmed a repeated key returns the original request and artifacts receive a 24-hour expiry. | Prevents duplicate work and limits the lifetime of downloadable personal data. | Passed |
+| Erasure sequencing | Confirmed session revocation occurs before anonymization and explicit confirmation is mandatory. | Prevents continued account use and accidental destructive requests. | Passed |
+| PII anonymization | Confirmed names, contacts, identities, MFA factors, and trusted devices are removed while immutable erasure evidence remains. | Satisfies the designed right-to-erasure boundary without destroying lawful evidence. | Passed |
+| Organization safety | Confirmed the final active organization owner cannot erase their account before transferring ownership. | Prevents an organization from becoming inaccessible or ownerless. | Passed |
+| Backup retention | Confirmed each completed erasure records the configured 30-day backup-purge deadline. | Gives AWS backup lifecycle controls a measurable deadline without mutating immutable snapshots from the app. | Passed |
+| Focused code quality | Ran Ruff and MyPy against the new privacy and audit modules. | Catches formatting, unsafe typing, and interface mistakes in the changed scope. | Passed |
+| Shared API contract | Parsed the shared OpenAPI contract with 60 paths. | Keeps the website and future mobile app aligned to the same audit, export, and erasure services. | Passed |
+| UI boundary | Confirmed no frontend screen or wireframe was created or changed. | Preserves the project owner's design-approval requirement. | Passed |
+| Owner review | Complete Milestone 9 backend and documentation are ready for project-owner review. | Final acceptance remains with the project owner before GitHub merge or UI work. | Awaiting review |
 
 ## Maintenance Rule
 

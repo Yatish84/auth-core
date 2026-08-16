@@ -87,6 +87,8 @@ FOR EACH ROW EXECUTE FUNCTION auth.reject_audit_mutation();
 
 Production additionally exports signed audit batches to an AWS retention target such as S3 Object Lock after legal retention requirements are approved.
 
+Cross-user application queries are additionally protected by row-level security: only a caller with an active database-backed `SECURITY_SUPERVISOR_L3` binding may read across user boundaries. Query results are still redacted by the control layer, and every successful review writes its own immutable audit event.
+
 ## Redis Semantics
 
 - All security keys have explicit TTLs except carefully bounded revocation state.

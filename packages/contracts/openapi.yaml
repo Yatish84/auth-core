@@ -799,6 +799,93 @@ paths:
         "200": {$ref: "#/components/responses/GovernedReset"}
         "403": {$ref: "#/components/responses/Problem"}
         "409": {$ref: "#/components/responses/Problem"}
+  /api/v1/admin/audit-logs:
+    get:
+      operationId: searchAuditLogs
+      tags: [privacy and auditing]
+      security: [{bearerAuth: []}]
+      parameters:
+        - {in: query, name: subject_user_id, schema: {type: string, format: uuid}}
+        - {in: query, name: event_type, schema: {type: string, minLength: 1, maxLength: 120}}
+        - {in: query, name: outcome, schema: {type: string, enum: [success, failure, denied]}}
+        - {in: query, name: occurred_from, schema: {type: string, format: date-time}}
+        - {in: query, name: occurred_to, schema: {type: string, format: date-time}}
+        - {in: query, name: cursor, schema: {type: string, minLength: 8, maxLength: 256}}
+        - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 50}}
+      responses:
+        "200":
+          description: Authorized, redacted, cursor-paginated audit history.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AuditPageResponse"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
+  /api/v1/privacy/exports:
+    post:
+      operationId: requestPrivacyExport
+      tags: [privacy and auditing]
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      responses:
+        "202": {$ref: "#/components/responses/PrivacyRequest"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
+        "503": {$ref: "#/components/responses/Problem"}
+  /api/v1/privacy/requests/{request_id}:
+    get:
+      operationId: getPrivacyRequest
+      tags: [privacy and auditing]
+      security: [{bearerAuth: []}]
+      parameters:
+        - {$ref: "#/components/parameters/PrivacyRequestId"}
+      responses:
+        "200": {$ref: "#/components/responses/PrivacyRequest"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "404": {$ref: "#/components/responses/Problem"}
+  /api/v1/privacy/exports/{request_id}/download:
+    get:
+      operationId: downloadPrivacyExport
+      tags: [privacy and auditing]
+      security: [{bearerAuth: []}]
+      parameters:
+        - {$ref: "#/components/parameters/PrivacyRequestId"}
+      responses:
+        "200":
+          description: Decrypted owner-only JSON export streamed without caching.
+          headers:
+            Content-Disposition: {schema: {type: string}}
+            X-Artifact-Expires-At: {schema: {type: string, format: date-time}}
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: true}
+        "401": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
+        "410": {$ref: "#/components/responses/Problem"}
+  /api/v1/privacy/erasures:
+    post:
+      operationId: requestAccountErasure
+      tags: [privacy and auditing]
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErasureRequest"}
+      responses:
+        "202": {$ref: "#/components/responses/PrivacyRequest"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "403": {$ref: "#/components/responses/Problem"}
+        "409": {$ref: "#/components/responses/Problem"}
   /.well-known/jwks.json:
     get:
       operationId: getSigningKeys
@@ -844,6 +931,11 @@ components:
     ResetId:
       in: path
       name: reset_id
+      required: true
+      schema: {type: string, format: uuid}
+    PrivacyRequestId:
+      in: path
+      name: request_id
       required: true
       schema: {type: string, format: uuid}
   responses:
@@ -897,6 +989,11 @@ components:
       content:
         application/json:
           schema: {$ref: "#/components/schemas/GovernedResetResponse"}
+    PrivacyRequest:
+      description: Owner-visible privacy workflow status.
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/PrivacyRequestResponse"}
   schemas:
     PasswordForgotRequest:
       type: object
@@ -988,6 +1085,52 @@ components:
         approved_at: {type: [string, "null"], format: date-time}
         executed_at: {type: [string, "null"], format: date-time}
         ticket_reference: {type: [string, "null"]}
+    AuditRecord:
+      type: object
+      additionalProperties: false
+      required: [audit_id, actor_user_id, subject_user_id, org_id, event_type, outcome, correlation_id, metadata, occurred_at]
+      properties:
+        audit_id: {type: string, format: uuid}
+        actor_user_id: {type: [string, "null"], format: uuid}
+        subject_user_id: {type: [string, "null"], format: uuid}
+        org_id: {type: [string, "null"], format: uuid}
+        event_type: {type: string, maxLength: 120}
+        outcome: {type: string, enum: [success, failure, denied]}
+        correlation_id: {type: string, format: uuid}
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Privacy-redacted event context; secrets and unnecessary PII are never returned.
+        occurred_at: {type: string, format: date-time}
+    AuditPageResponse:
+      type: object
+      additionalProperties: false
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items: {$ref: "#/components/schemas/AuditRecord"}
+        next_cursor: {type: [string, "null"]}
+    PrivacyRequestResponse:
+      type: object
+      additionalProperties: false
+      required: [request_id, request_type, state, requested_at, completed_at, artifact_expires_at, failure_code, backup_purge_due_at]
+      properties:
+        request_id: {type: string, format: uuid}
+        request_type: {type: string, enum: [export, erasure]}
+        state: {type: string, enum: [requested, processing, completed, failed, cancelled]}
+        requested_at: {type: string, format: date-time}
+        completed_at: {type: [string, "null"], format: date-time}
+        artifact_expires_at: {type: [string, "null"], format: date-time}
+        failure_code: {type: [string, "null"]}
+        backup_purge_due_at: {type: [string, "null"], format: date-time}
+    ErasureRequest:
+      type: object
+      additionalProperties: false
+      required: [confirmation]
+      properties:
+        confirmation: {type: string, const: ERASE_MY_ACCOUNT}
     EmailSignupRequest:
       type: object
       additionalProperties: false

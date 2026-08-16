@@ -26,51 +26,49 @@ This file is the simple, ongoing record of what has been planned, what is being 
 | 5. Extra security | Add MFA, authenticator codes, backup methods, and passkeys. | Complete |
 | 6. Sessions | Add secure tokens, refresh, logout, device sessions, and theft detection. | Complete |
 | 7. Personal and organization workspaces | Add private portfolios, optional organizations, privacy-safe referrals, roles, and member removal. | Complete |
-| 8. Recovery and administration | Add password recovery and controlled support actions. | In progress |
-| 9. Privacy and auditing | Add audit review, data export, and account erasure. | Not started |
+| 8. Recovery and administration | Add password recovery and controlled support actions. | Complete |
+| 9. Privacy and auditing | Add audit review, data export, and account erasure. | In progress |
 | 10. Web experience | Connect all approved website screens to working services. | Not started |
 | 11. Public test website | Publish the controlled MVP for stakeholder testing. | Not started |
 | 12. AWS production preparation | Harden and move the system to the final AWS environment. | Not started |
 
-## Current Milestone: 8 - Recovery and Controlled Administration
+## Current Milestone: 9 - Privacy and Auditing
 
 ### Goal
 
-Help users safely regain account access while ensuring that powerful support actions require verified staff roles, independent approval, waiting periods, user notification, and complete audit evidence.
+Give users controlled access to their personal data and safe account erasure while giving authorized security reviewers searchable, privacy-conscious audit evidence.
 
 ### Work Items
 
 | Work item | Simple description | Status |
 |---|---|---|
-| Recovery foundation | Define reusable recovery workflows, safe public responses, expiration, replay protection, and audit evidence. | Ready for review |
-| Password-reset request | Send a secure single-use reset link without revealing whether an email belongs to an account. | Ready for review |
-| Password-reset execution | Verify the reset link, password policy, breach status, and password history before changing the password. | Ready for review |
-| Session response | Revoke active sessions and refresh-token families after a successful password or sensitive contact change. | Ready for review |
-| Account unlock | Allow an automatic or authorized support process to release a temporary login lock safely. | Ready for review |
-| Account suspension | Let an authorized administrator suspend an account and immediately revoke all active access. | Ready for review |
-| Support-assisted recovery | Require a support ticket and verified identity evidence before issuing a single-use recovery link. | Ready for review |
-| Governed MFA reset | Require separate L2 initiation and L3 approval, then wait 12 hours and notify the user before execution. | Ready for review |
-| Contact change | Verify both the old and new email or phone channel before changing a primary contact. | Ready for review |
-| Staff authorization | Enforce approved support and security roles without trusting user-supplied role claims. | Ready for review |
-| Tests and documentation | Prove UC-501 to UC-504, UC-507, UC-508, and UC-510 success, abuse, replay, role, and delay paths. | Ready for review |
-| UI boundary | Document proposed recovery and administration screens without creating or changing frontend visuals until approved. | Ready for review |
+| Audit-query foundation | Define authorized, paginated, redacted audit searches without weakening immutable audit storage. | Implemented |
+| Authorized audit search | Let approved security auditors filter and review relevant audit evidence for UC-505. | Implemented |
+| Audit privacy controls | Redact unnecessary sensitive values and prevent access outside the reviewer's permitted scope. | Implemented |
+| Data-export request | Let a reauthenticated user request a machine-readable copy of their stored personal data for UC-601. | Implemented |
+| Protected export artifact | Assemble, encrypt, authorize, expire, and safely download the user's export. | Implemented |
+| Account-erasure request | Let a reauthenticated user request erasure with clear warnings and track its progress for UC-602. | Implemented |
+| Anonymization and access removal | Revoke access, remove or irreversibly anonymize personal data, and preserve only lawful pseudonymous evidence. | Implemented |
+| Retention and backup expiry | Enforce configurable retention and document the approved operational path for expiring backup copies. | Implemented |
+| Tests and documentation | Prove audit authorization, export isolation, artifact expiry, erasure safety, replay protection, and retention behavior. | Ready for review |
+| UI boundary | Document proposed privacy and audit screens without creating or changing frontend visuals until approved. | Ready for review |
 
 ### Completion Checklist
 
-- [x] Password-reset requests return the same safe response for known and unknown accounts.
-- [x] Reset and recovery tokens are random, hashed at rest, expiring, rate-limited, and single-use.
-- [x] New passwords pass policy, breach, and password-history checks before storage with Argon2id.
-- [x] Successful password reset revokes existing sessions and sends a security notification.
-- [x] Unlock and suspension actions require an authenticated, authorized staff role and a ticket reference.
-- [x] Account suspension immediately blocks login and revokes all active access.
-- [x] Support-assisted recovery records verified evidence without storing unnecessary sensitive documents.
-- [x] The person approving an MFA reset is different from the person requesting it.
-- [x] MFA reset execution cannot occur before the approved 12-hour delay.
-- [x] The user is warned through original verified channels before a governed MFA reset executes.
-- [x] Primary contact changes require proof through both the old and new channel.
-- [x] Replay, expired, wrong-role, self-approval, early-execution, and changed-state paths are rejected safely.
-- [x] Recovery behavior is reusable by the web client and future mobile app through the same API contracts.
-- [ ] Documentation and any proposed recovery/admin screens are reviewed by the project owner before UI implementation.
+- [x] Only authorized security reviewers can search audit evidence.
+- [x] Audit results are paginated, filtered safely, and redact unnecessary sensitive values.
+- [x] Audit records remain append-only and cannot be changed through the application.
+- [x] A user must recently reauthenticate before requesting an export or erasure.
+- [x] A user's export contains only their own permitted data in a machine-readable format.
+- [x] Export artifacts are encrypted, access-controlled, short-lived, and unavailable after expiry.
+- [x] Duplicate export requests are handled safely through idempotency controls.
+- [x] Erasure immediately disables access and revokes active sessions before anonymization.
+- [x] Erasure removes or irreversibly anonymizes personal data while preserving only lawful pseudonymous audit evidence.
+- [x] Privacy-request status clearly reports requested, processing, completed, failed, and cancelled states without exposing private data.
+- [x] Retention durations are configuration-backed and remain subject to legal approval before production.
+- [x] Backup expiry is documented and tested as an operational retention control rather than direct application deletion.
+- [x] Privacy and audit behavior is reusable by the web client and future mobile app through the same API contracts.
+- [ ] Documentation and any proposed privacy/audit screens are reviewed by the project owner before UI implementation.
 
 ## Completed Milestone Archive
 
@@ -317,6 +315,46 @@ Give every user one private workspace for managing their own portfolio, allow op
 - [x] PostgreSQL tests prove personal, cross-user, and cross-organization data isolation.
 - [x] Documentation and proposed workspace-management needs were reviewed by the project owner; no frontend screens were created or changed.
 
+### Milestone 8 - Recovery and Controlled Administration
+
+#### Goal
+
+Help users safely regain account access while ensuring that powerful support actions require verified staff roles, independent approval, waiting periods, user notification, and complete audit evidence.
+
+#### Work Items
+
+| Work item | Simple description | Final status |
+|---|---|---|
+| Recovery foundation | Define reusable recovery workflows, safe public responses, expiration, replay protection, and audit evidence. | Complete |
+| Password-reset request | Send a secure single-use reset link without revealing whether an email belongs to an account. | Complete |
+| Password-reset execution | Verify the reset link, password policy, breach status, and password history before changing the password. | Complete |
+| Session response | Revoke active sessions and refresh-token families after a successful password or sensitive contact change. | Complete |
+| Account unlock | Allow an automatic or authorized support process to release a temporary login lock safely. | Complete |
+| Account suspension | Let an authorized administrator suspend an account and immediately revoke all active access. | Complete |
+| Support-assisted recovery | Require a support ticket and verified identity evidence before issuing a single-use recovery link. | Complete |
+| Governed MFA reset | Require separate L2 initiation and L3 approval, then wait 12 hours and notify the user before execution. | Complete |
+| Contact change | Verify both the old and new email or phone channel before changing a primary contact. | Complete |
+| Staff authorization | Enforce approved support and security roles without trusting user-supplied role claims. | Complete |
+| Tests and documentation | Prove UC-501 to UC-504, UC-507, UC-508, and UC-510 success, abuse, replay, role, and delay paths. | Complete |
+| UI boundary | Document proposed recovery and administration screens without creating or changing frontend visuals until approved. | Complete |
+
+#### Completion Checklist
+
+- [x] Password-reset requests return the same safe response for known and unknown accounts.
+- [x] Reset and recovery tokens are random, hashed at rest, expiring, rate-limited, and single-use.
+- [x] New passwords pass policy, breach, and password-history checks before storage with Argon2id.
+- [x] Successful password reset revokes existing sessions and sends a security notification.
+- [x] Unlock and suspension actions require an authenticated, authorized staff role and a ticket reference.
+- [x] Account suspension immediately blocks login and revokes all active access.
+- [x] Support-assisted recovery records verified evidence without storing unnecessary sensitive documents.
+- [x] The person approving an MFA reset is different from the person requesting it.
+- [x] MFA reset execution cannot occur before the approved 12-hour delay.
+- [x] The user is warned through original verified channels before a governed MFA reset executes.
+- [x] Primary contact changes require proof through both the old and new channel.
+- [x] Replay, expired, wrong-role, self-approval, early-execution, and changed-state paths are rejected safely.
+- [x] Recovery behavior is reusable by the web client and future mobile app through the same API contracts.
+- [x] Documentation was reviewed and approved by the project owner; no frontend screens were created or changed.
+
 ## Work Log
 
 ### August 14, 2026
@@ -465,6 +503,32 @@ Give every user one private workspace for managing their own portfolio, allow op
 - Passed 68 fast Python tests and 26 real PostgreSQL/Redis tests, including reset replay/history, dual contact proof, staff-role denial, row isolation, self-approval denial, early-execution denial, and MFA revocation.
 - Passed Python lint/type checks, web lint/type/test/build, Go tests/vet, documentation validation, OpenAPI parsing, Compose validation, migration downgrade/upgrade, zero schema drift, and a live 202 generic recovery smoke test.
 - Marked Milestone 8 ready for project-owner review; no frontend visual was created or changed.
+- Project owner approved the complete Milestone 8 delivery and authorized its GitHub publication and merge.
+- Opened Milestone 8 pull request #9 and passed all six GitHub quality checks.
+- Merged pull request #9 into `main` with merge commit `4d751e872cf2319dd39182f5a215fa705e523fa7`.
+- Preserved the complete Milestone 8 goal, work items, and completion checklist in the permanent archive.
+- Started Milestone 9 privacy and auditing planning on branch `codex/milestone-9-privacy-audit`.
+- Added UC-505 audit search with recent-MFA enforcement and database-backed `SECURITY_SUPERVISOR_L3` authorization.
+- Added subject, event, outcome, time-range, and opaque cursor filters with a maximum page size of 100 records.
+- Added recursive sensitive-metadata redaction and an immutable `AUDIT_LOGS_QUERIED` event for every successful review.
+- Added migration `0010_audit_query_access` so PostgreSQL independently permits approved cross-user audit review while retaining user and organization isolation.
+- Expanded the shared web/mobile OpenAPI contract from 55 to 56 paths without creating or changing frontend screens.
+- Passed 6 focused Python tests and 1 real PostgreSQL row-isolation test plus focused lint, type, and OpenAPI checks.
+- Added UC-601 export request, owner-only status, and JSON download endpoints with recent-MFA and idempotency enforcement.
+- Added AES-256-GCM export encryption bound to both the owner and request, SHA-256 integrity verification, and automatic 24-hour artifact expiry.
+- Excluded password hashes, MFA secrets, refresh tokens, and signing material while exporting approved profile, identity, factor, session, device, and workspace-role metadata.
+- Added migration `0011_privacy_export_artifacts` with owner-isolated RLS for both privacy requests and encrypted artifacts.
+- Expanded the shared web/mobile OpenAPI contract from 56 to 59 paths without creating or changing frontend screens.
+- Passed 11 focused privacy/audit tests and 2 real PostgreSQL tests, including encrypted-at-rest content, idempotent retry, artifact ownership isolation, and tamper detection.
+- Rehearsed a fresh migration upgrade, confirmed zero schema drift, downgraded migration `0011`, and successfully upgraded it again.
+- Added UC-602 account erasure with explicit typed confirmation, recent MFA, idempotency, and owner-only status tracking.
+- Required organization ownership transfer before erasure when the user is the last active owner.
+- Revoked all account sessions before deleting identities, MFA factors, trusted devices, contact workflows, refresh families, personal referrals, and encrypted exports.
+- Removed profile PII, anonymized and closed the personal workspace, and retained only pseudonymous immutable audit evidence.
+- Added configurable export and backup-retention periods plus migration `0012_privacy_erasure_retention` for the recorded backup-purge deadline.
+- Expanded the shared web/mobile OpenAPI contract from 59 to 60 paths without creating or changing frontend screens.
+- Passed 14 focused privacy/audit tests and 4 real PostgreSQL tests, including erasure, evidence retention, and last-owner blocking.
+- Marked the complete Milestone 9 backend and documentation scope ready for project-owner review.
 
 ## Decisions
 
@@ -481,8 +545,8 @@ Give every user one private workspace for managing their own portfolio, allow op
 
 ## Current Blockers or Owner Actions
 
-There are no current owner blockers. Local Mailpit and simulated providers support recovery development without paid credentials. AWS KMS credentials, production messaging providers, and production domains are not needed until later deployment milestones.
+There are no current owner blockers for local Milestone 9 work. Production legal retention periods, AWS artifact storage, KMS credentials, and immutable audit-retention services are not needed until later deployment milestones. No privacy or audit frontend screen will be created or changed without project-owner approval.
 
 ## Next Planned Milestone
 
-After recovery and controlled administration are accepted, Milestone 9 will add audit review, privacy export, account erasure, and retention workflows.
+After privacy and auditing are accepted, Milestone 10 will connect the approved website screens to the completed reusable services.
