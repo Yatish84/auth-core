@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known local-only AES test fixtures"
+regexes = [
+  '''bG9jYWwtbWZhLWtleS1jaGFuZ2UtbWUtMzItYnl0ZXM=''',
+  '''bG9jYWwtbWZhLWtleS1jaGFuZ2UtYmVmb3JlLXByb2Q=''',
+]
