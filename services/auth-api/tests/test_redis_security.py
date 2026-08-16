@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
@@ -23,6 +24,26 @@ def test_security_keys_hide_identifiers_and_define_expiry() -> None:
     assert str(user_id) not in key.name
     assert "password-reset" not in key.name
     assert key.ttl_seconds == OTP_TTL_SECONDS
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_session_revocations_are_expiring_and_queryable(
+    integration_redis: Redis,
+) -> None:
+    store = RedisSecurityStore(
+        integration_redis, SecurityKeyFactory(b"test-key-material-for-redis")
+    )
+    user_id, family_id, jti = uuid4(), uuid4(), uuid4()
+    revoked_at = datetime.now(UTC)
+
+    await store.revoke_access_token(jti, 900)
+    await store.revoke_family(family_id, 3600)
+    await store.revoke_user(user_id, revoked_at)
+
+    assert await store.access_token_is_revoked(jti)
+    assert await store.family_is_revoked(family_id)
+    assert await store.user_revoked_at(user_id) == revoked_at.replace(microsecond=0)
 
 
 @pytest.mark.integration

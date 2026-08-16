@@ -2,6 +2,7 @@ import hmac
 import json
 from collections.abc import Awaitable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Any, cast
 from uuid import UUID
@@ -87,6 +88,11 @@ class SecurityKeyFactory:
     def user_revocation(self, user_id: UUID) -> RedisKey:
         return RedisKey(
             f"auth:revocation:user:{self._opaque(user_id)}", USER_REVOCATION_TTL_SECONDS
+        )
+
+    def family_revocation(self, family_id: UUID, remaining_lifetime: int) -> RedisKey:
+        return RedisKey(
+            f"auth:revocation:family:{self._opaque(family_id)}", remaining_lifetime
         )
 
     def organization_revocation(self, user_id: UUID, org_id: UUID) -> RedisKey:
@@ -236,3 +242,24 @@ class RedisSecurityStore:
     async def revoke_access_token(self, jti: UUID, remaining_lifetime: int) -> None:
         key = self._keys.access_revocation(jti, remaining_lifetime)
         await cast(Awaitable[Any], self._client.set(key.name, "1", ex=key.ttl_seconds))
+
+    async def access_token_is_revoked(self, jti: UUID) -> bool:
+        return bool(await self._client.exists(self._keys.access_revocation(jti, 1).name))
+
+    async def revoke_family(self, family_id: UUID, remaining_lifetime: int) -> None:
+        key = self._keys.family_revocation(family_id, max(1, remaining_lifetime))
+        await cast(Awaitable[Any], self._client.set(key.name, "1", ex=key.ttl_seconds))
+
+    async def family_is_revoked(self, family_id: UUID) -> bool:
+        return bool(await self._client.exists(self._keys.family_revocation(family_id, 1).name))
+
+    async def revoke_user(self, user_id: UUID, issued_before: datetime) -> None:
+        key = self._keys.user_revocation(user_id)
+        timestamp = int(issued_before.astimezone(UTC).timestamp())
+        await cast(
+            Awaitable[Any], self._client.set(key.name, str(timestamp), ex=key.ttl_seconds)
+        )
+
+    async def user_revoked_at(self, user_id: UUID) -> datetime | None:
+        value = await self._client.get(self._keys.user_revocation(user_id).name)
+        return datetime.fromtimestamp(int(value), UTC) if value is not None else None

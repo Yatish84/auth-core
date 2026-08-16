@@ -75,6 +75,10 @@ services:
       REGISTRATION_PROVIDER_MODE: ${REGISTRATION_PROVIDER_MODE:-local}
       LOGIN_PROVIDER_MODE: ${LOGIN_PROVIDER_MODE:-local}
       SECRET_ENCRYPTION_MODE: ${SECRET_ENCRYPTION_MODE:-local}
+      TOKEN_SIGNING_MODE: ${TOKEN_SIGNING_MODE:-local}
+      REFRESH_TOKEN_HMAC_SECRET: ${REFRESH_TOKEN_HMAC_SECRET:-local-refresh-token-key-change-me}
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8000}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-grox-platform}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
     ports:
       - "${AUTH_API_PORT:-8000}:8000"
@@ -96,6 +100,11 @@ services:
       context: ./services/jwt-verifier
     environment:
       PORT: "8081"
+      JWKS_URL: ${JWKS_URL:-http://auth-api:8000/.well-known/jwks.json}
+      JWT_ISSUER: ${JWT_ISSUER:-http://localhost:8000}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-grox-platform}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_KEY_HMAC_SECRET: ${REDIS_KEY_HMAC_SECRET:-local-development-key-change-me}
     ports:
       - "${JWT_VERIFIER_PORT:-8081}:8081"
     healthcheck:
@@ -103,6 +112,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    depends_on:
+      auth-api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   web:
     build:

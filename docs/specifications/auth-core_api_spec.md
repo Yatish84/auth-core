@@ -94,6 +94,7 @@ This human-readable contract defines the intended API surface. During implementa
 
 | Method | Path | Use case | Result |
 |---|---|---|---|
+| POST | `/auth/session` | UC-401 | Consume a single-use session-ready workflow and create the web or mobile session. |
 | POST | `/auth/refresh` | UC-402 | Atomically rotate refresh token and issue new pair. |
 | POST | `/auth/logout` | UC-403 | Revoke current family/session and access JTI. |
 | POST | `/auth/logout-all` | UC-404 | Revoke every active user family. |
@@ -184,7 +185,7 @@ Primary login returns a workflow decision, not a JWT. Milestone 5 consumes the w
 }
 ```
 
-Backup codes are populated only when first generated and must be displayed once. MFA completion still returns no access or refresh token; Milestone 6 performs session issuance.
+Backup codes are populated only when first generated and must be displayed once. MFA completion still returns no access or refresh token; `POST /auth/session` consumes the session-ready workflow exactly once.
 
 ### Token response for mobile
 
@@ -193,12 +194,14 @@ Backup codes are populated only when first generated and must be displayed once.
   "access_token": "<jwt>",
   "refresh_token": "<opaque-single-use-token>",
   "token_type": "Bearer",
-  "expires_in": 900,
-  "session_id": "0f523e77-840b-443d-8538-9aa660700b76"
+  "access_expires_at": "2026-08-16T13:45:00Z",
+  "refresh_expires_at": "2026-08-17T13:30:00Z",
+  "session_id": "0f523e77-840b-443d-8538-9aa660700b76",
+  "csrf_token": null
 }
 ```
 
-The web response omits `refresh_token`; the server sets the refresh cookie.
+The web response sets `refresh_token` to `null`; the server delivers it only through a `Secure`, `HttpOnly`, `SameSite=Lax` cookie and returns a matching double-submit CSRF token.
 
 ### MFA challenge problem
 

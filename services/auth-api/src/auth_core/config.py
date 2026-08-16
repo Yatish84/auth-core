@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     registration_provider_mode: str = "local"
     login_provider_mode: str = "local"
     secret_encryption_mode: str = "local"
+    token_signing_mode: str = "local"
+    refresh_token_hmac_secret: str = "local-refresh-token-key-change-me"
+    jwt_issuer: str = "http://localhost:8000"
+    jwt_audience: str = "grox-platform"
 
     @property
     def allowed_origins(self) -> list[str]:
@@ -58,6 +62,8 @@ class Settings(BaseSettings):
             raise ValueError("Production cannot use local login provider adapters")
         if self.app_env == "production" and self.secret_encryption_mode == "local":
             raise ValueError("Production cannot use the local secret encryption adapter")
+        if self.app_env == "production" and self.token_signing_mode == "local":
+            raise ValueError("Production cannot use the local token signing adapter")
         return self
 
 
