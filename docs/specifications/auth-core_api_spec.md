@@ -148,14 +148,28 @@ All admin endpoints require appropriate role claims, recent strong MFA, tenant c
 
 ## Core Request and Response Shapes
 
-### Login request
+### Primary login request
 
 ```json
 {
   "email": "user@example.com",
-  "password": "not-logged-or-returned"
+  "password": "not-logged-or-returned",
+  "device_fingerprint": "client-generated-bounded-risk-signal"
 }
 ```
+
+### Primary login decision
+
+```json
+{
+  "decision": "mfa_required",
+  "risk": "high",
+  "workflow_token": "<opaque-five-minute-token>",
+  "allowed_methods": ["password", "phone_otp"]
+}
+```
+
+Primary login returns a workflow decision, not a JWT. Milestone 5 consumes the workflow for MFA and Milestone 6 issues a session only after every required check succeeds.
 
 ### Token response for mobile
 

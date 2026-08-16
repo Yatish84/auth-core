@@ -1,13 +1,14 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from uuid import UUID, uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from auth_core.boundary.http.health import router as health_router
+from auth_core.boundary.http.login import router as login_router
 from auth_core.boundary.http.registration import router as registration_router
 from auth_core.config import get_settings
 from auth_core.infrastructure.database import close_database
@@ -38,6 +39,17 @@ app.add_middleware(
 )
 app.include_router(health_router)
 app.include_router(registration_router)
+app.include_router(login_router)
+
+
+@app.middleware("http")
+async def prevent_auth_response_storage(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    response = await call_next(request)
+    if request.url.path.startswith("/api/v1/auth"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.exception_handler(RequestValidationError)

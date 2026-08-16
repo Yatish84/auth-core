@@ -56,6 +56,9 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       REDIS_KEY_HMAC_SECRET: ${REDIS_KEY_HMAC_SECRET:-local-development-key-change-me}
       OTP_HMAC_SECRET: ${OTP_HMAC_SECRET:-local-otp-key-change-me}
+      LOGIN_SIGNAL_HMAC_SECRET: ${LOGIN_SIGNAL_HMAC_SECRET:-local-login-signal-key-change-me}
+      LOCAL_OIDC_SIGNING_SECRET: ${LOCAL_OIDC_SIGNING_SECRET:-local-oidc-signing-key-change-me}
+      LOCAL_OIDC_FRONTEND_URL: ${LOCAL_OIDC_FRONTEND_URL:-http://localhost:3000}
       LOCAL_CAPTCHA_TOKEN: ${LOCAL_CAPTCHA_TOKEN:-local-development-pass}
       VERIFICATION_BASE_URL: ${VERIFICATION_BASE_URL:-http://localhost:3000/verify-email}
       SMTP_HOST: ${SMTP_HOST:-mailpit}
@@ -64,6 +67,7 @@ services:
       LOCAL_SMS_INBOX: ${LOCAL_SMS_INBOX:-sms@local.vittavaan.test}
       HIBP_USER_AGENT: ${HIBP_USER_AGENT:-Vittavaan-auth-core/0.1 security@vittavaan.test}
       REGISTRATION_PROVIDER_MODE: ${REGISTRATION_PROVIDER_MODE:-local}
+      LOGIN_PROVIDER_MODE: ${LOGIN_PROVIDER_MODE:-local}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
     ports:
       - "${AUTH_API_PORT:-8000}:8000"

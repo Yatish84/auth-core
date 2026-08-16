@@ -4,6 +4,8 @@ import pytest
 from redis.asyncio import Redis
 
 from auth_core.infrastructure.redis_security import (
+    LOGIN_LOCK_TTL_SECONDS,
+    LOGIN_WORKFLOW_TTL_SECONDS,
     OTP_TTL_SECONDS,
     RedisSecurityStore,
     SecurityKeyFactory,
@@ -55,3 +57,35 @@ async def test_otp_verification_is_atomic_and_single_use(integration_redis: Redi
 
     assert first == 1
     assert replay == -1
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_login_lock_and_workflow_are_expiring(integration_redis: Redis) -> None:
+    factory = SecurityKeyFactory(b"test-key-material-for-redis")
+    store = RedisSecurityStore(integration_redis, factory)
+    await store.lock_login("person@example.com")
+    await store.store_login_workflow("opaque-workflow-token", {"decision": "mfa_required"})
+
+    lock_ttl = await integration_redis.ttl(factory.login_lock("person@example.com").name)
+    workflow_ttl = await integration_redis.ttl(
+        factory.login_workflow("opaque-workflow-token").name
+    )
+
+    assert 0 < lock_ttl <= LOGIN_LOCK_TTL_SECONDS
+    assert 0 < workflow_ttl <= LOGIN_WORKFLOW_TTL_SECONDS
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_oidc_state_is_consumed_once(integration_redis: Redis) -> None:
+    store = RedisSecurityStore(
+        integration_redis, SecurityKeyFactory(b"test-key-material-for-redis")
+    )
+    await store.store_oidc_workflow("opaque-state", {"provider": "google"})
+
+    first = await store.consume_oidc_workflow("opaque-state")
+    replay = await store.consume_oidc_workflow("opaque-state")
+
+    assert first == {"provider": "google"}
+    assert replay is None

@@ -107,7 +107,94 @@ paths:
       responses:
         "200": {$ref: "#/components/responses/Verified"}
         "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/login:
+    post:
+      operationId: loginPassword
+      tags: [login]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PasswordLoginRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/LoginDecision"}
+        "401": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/login/phone/request:
+    post:
+      operationId: requestPhoneLogin
+      tags: [login]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PhoneLoginRequest"}
+      responses:
+        "202": {$ref: "#/components/responses/Accepted"}
+        "400": {$ref: "#/components/responses/Problem"}
+        "429": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/login/phone/confirm:
+    post:
+      operationId: confirmPhoneLogin
+      tags: [login]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PhoneLoginConfirmRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/LoginDecision"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/sso/{provider}/authorize:
+    post:
+      operationId: authorizeOidc
+      tags: [login]
+      parameters:
+        - $ref: "#/components/parameters/OidcProvider"
+      responses:
+        "200":
+          description: Provider authorization URL with a short-lived state value.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/OidcAuthorizationResponse"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/sso/{provider}/callback:
+    post:
+      operationId: completeOidcLogin
+      tags: [login]
+      parameters:
+        - $ref: "#/components/parameters/OidcProvider"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/OidcCallbackRequest"}
+      responses:
+        "200": {$ref: "#/components/responses/LoginDecision"}
+        "400": {$ref: "#/components/responses/Problem"}
+  /api/v1/auth/fallback-options:
+    get:
+      operationId: getLoginFallbackOptions
+      tags: [login]
+      parameters:
+        - in: query
+          name: workflow_token
+          required: true
+          schema: {type: string, minLength: 20, maxLength: 512}
+      responses:
+        "200":
+          description: Safe methods available to this short-lived login workflow.
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FallbackOptionsResponse"}
+        "400": {$ref: "#/components/responses/Problem"}
 components:
+  parameters:
+    OidcProvider:
+      in: path
+      name: provider
+      required: true
+      schema: {type: string, enum: [google, apple, microsoft]}
   responses:
     Accepted:
       description: Request accepted without exposing account existence.
@@ -124,6 +211,11 @@ components:
       content:
         application/problem+json:
           schema: {$ref: "#/components/schemas/ProblemResponse"}
+    LoginDecision:
+      description: Short-lived handoff to MFA or future session issuance; never a token response.
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/LoginDecisionResponse"}
   schemas:
     EmailSignupRequest:
       type: object
@@ -172,6 +264,68 @@ components:
         phone: {type: string, minLength: 8, maxLength: 32}
         code: {type: string, pattern: "^[0-9]{6}$", writeOnly: true}
         captcha_token: {type: string, writeOnly: true}
+    PasswordLoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password, device_fingerprint]
+      properties:
+        email: {type: string, format: email, maxLength: 320}
+        password: {type: string, minLength: 1, maxLength: 128, writeOnly: true}
+        device_fingerprint: {type: string, minLength: 16, maxLength: 512, writeOnly: true}
+    PhoneLoginRequest:
+      type: object
+      additionalProperties: false
+      required: [phone, captcha_token]
+      properties:
+        phone: {type: string, minLength: 8, maxLength: 32}
+        captcha_token: {type: string, minLength: 1, maxLength: 2048, writeOnly: true}
+    PhoneLoginConfirmRequest:
+      type: object
+      additionalProperties: false
+      required: [phone, code, captcha_token, device_fingerprint]
+      properties:
+        phone: {type: string, minLength: 8, maxLength: 32}
+        code: {type: string, pattern: "^[0-9]{6}$", writeOnly: true}
+        captcha_token: {type: string, minLength: 1, maxLength: 2048, writeOnly: true}
+        device_fingerprint: {type: string, minLength: 16, maxLength: 512, writeOnly: true}
+    OidcCallbackRequest:
+      type: object
+      additionalProperties: false
+      required: [state, code, device_fingerprint]
+      properties:
+        state: {type: string, minLength: 20, maxLength: 512, writeOnly: true}
+        code: {type: string, minLength: 20, maxLength: 8192, writeOnly: true}
+        device_fingerprint: {type: string, minLength: 16, maxLength: 512, writeOnly: true}
+    OidcAuthorizationResponse:
+      type: object
+      additionalProperties: false
+      required: [authorization_url, state]
+      properties:
+        authorization_url: {type: string, format: uri}
+        state: {type: string}
+    LoginDecisionResponse:
+      type: object
+      additionalProperties: false
+      required: [decision, risk, workflow_token, allowed_methods]
+      properties:
+        decision:
+          type: string
+          enum: [session_ready, mfa_required, collision_proof_required]
+        risk: {type: string, enum: [low, medium, high]}
+        workflow_token: {type: string}
+        allowed_methods:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+    FallbackOptionsResponse:
+      type: object
+      additionalProperties: false
+      required: [allowed_methods]
+      properties:
+        allowed_methods:
+          type: array
+          items: {type: string}
+          uniqueItems: true
     AcceptedResponse:
       type: object
       additionalProperties: false
